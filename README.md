@@ -2,6 +2,8 @@
 
 **Leakage-free, externally validated and explainable deep learning for chest radiographs, from data to a deployable API.**
 
+[![Live demo](https://img.shields.io/badge/%F0%9F%A4%97%20Live%20demo-Hugging%20Face%20Space-FFD21E)](https://huggingface.co/spaces/emir-mutlu/pneumonia-cxr-detection)
+[![Model](https://img.shields.io/badge/%F0%9F%A4%97%20Model-ONNX-FFD21E)](https://huggingface.co/emir-mutlu/pneumonia-cxr-convnext)
 [![CI](https://github.com/emir-mutlu/pneumonia-cxr-detection/actions/workflows/ci.yml/badge.svg)](https://github.com/emir-mutlu/pneumonia-cxr-detection/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/python-3.10%2B-3776AB)
 ![PyTorch](https://img.shields.io/badge/PyTorch-2.x-EE4C2C)
@@ -18,9 +20,13 @@
   **8 %**, worse than random. It was right for the wrong reasons.
 * **Leakage found and fixed**: RSNA's 29,684 "patients" are really images of only **12,233
   patients**; splits use the true NIH patient id.
+* **Runs in the browser, privately**: Grad-CAM is derived in closed form and compiled into the
+  ONNX graph, so the [live demo](https://huggingface.co/spaces/emir-mutlu/pneumonia-cxr-detection)
+  computes the probability and the heatmap with ONNX Runtime Web on the visitor's device. No
+  X-ray is ever uploaded.
 * **Deployable**: 57 MB ONNX model (fp16-stored weights, fp32 compute, identical AUROC),
   ~30 ms per image on CPU, torch-free FastAPI + Docker service, and a clinical-style web viewer
-  (English / Turkish) with live Grad-CAM.
+  (English / Turkish).
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="reports/figures/demo_dark.png">
@@ -31,12 +37,29 @@
 
 ## Web demo
 
+**[Open the live demo](https://huggingface.co/spaces/emir-mutlu/pneumonia-cxr-detection)**: no
+install, nothing uploaded. The first visit downloads the model once (~57 MB); after that an
+analysis takes about a second on a laptop.
+
+The same viewer has two engines:
+
+| | Live demo (static Hugging Face Space) | Local server (`pneumo demo`) |
+|---|---|---|
+| Inference | ONNX Runtime Web (WASM) in the browser | PyTorch on CPU / GPU behind FastAPI |
+| Grad-CAM | closed form inside the ONNX graph | autograd hooks |
+| Image leaves the device | never | sent to your own server only |
+| Formats | PNG, JPEG | PNG, JPEG, DICOM |
+| Speed | ≈0.8 s per study (laptop, single thread) | ≈60 ms (GPU), ≈0.6 s (2-core CPU) |
+
+The browser pre-processing re-implements Pillow's grayscale conversion and anti-aliased
+bilinear resampling, so the browser and Python give the same probabilities (0.9993 / 0.0064 /
+0.7109 on the three sample studies in both).
+
 ```bash
-pneumo demo          # http://localhost:7860 (uses the released model in models/)
+pneumo demo          # local server at http://localhost:7860 (uses the released model in models/)
 ```
 
-A reading-room style viewer built for clinicians rather than ML engineers, with no external
-scripts or fonts, so it runs offline on a hospital network:
+A reading-room style viewer built for clinicians rather than ML engineers:
 
 * **Viewer**: dark PACS-like canvas with original / heatmap / side-by-side modes, overlay opacity,
   brightness, contrast and invert, and a marker on the strongest activation.
@@ -205,6 +228,11 @@ RSNA 70/10/20. Details, split tables, data-quality findings and required citatio
   check against PyTorch), torch-free `OnnxPredictor`, FastAPI service accepting PNG/JPEG/DICOM,
   slim Docker image, and a FastAPI + vanilla JS web viewer that computes Grad-CAM on a single
   dedicated model thread (≈60 ms per study on GPU).
+* **In-browser inference**: for pooled heads (ConvNeXt: pool → LayerNorm → linear; ResNet:
+  pool → linear) the gradient of the logit with respect to the last feature map is constant over
+  space, so the Grad-CAM weights have a closed form (verified to 2·10⁻⁷ against autograd). The
+  `pneumo export-browser` graph returns probability and heatmap in one forward pass and runs in
+  ONNX Runtime Web. `scripts/deploy_space.py` publishes the model repo and the static Space.
 
 ## Quickstart
 
@@ -253,9 +281,10 @@ to track runs with MLflow (`pip install -e ".[track]"`).
 ├── app/
 │   ├── api.py               FastAPI service (ONNX Runtime, no PyTorch)
 │   ├── web.py               web demo backend: analysis + Grad-CAM endpoint
-│   ├── static/              viewer UI (HTML, CSS, JS; no external dependencies)
+│   ├── static/              viewer UI (HTML, CSS, JS) + in-browser ONNX engine
 │   └── examples/            three held-out test images (with attribution)
 ├── configs/                 one YAML per experiment
+├── deploy/huggingface/      cards for the static Space, the model repo and a Docker Space
 ├── docs/DATASETS.md         sources, licenses, splits, data-quality findings
 ├── models/                  released model: model.onnx, model.pt, model_meta.json
 ├── reports/                 generated results.md, results.json and figures
@@ -271,7 +300,8 @@ to track runs with MLflow (`pip install -e ".[track]"`).
 │   ├── inference.py         torch-free ONNX predictor
 │   ├── report.py            tables and figures
 │   └── cli.py               `pneumo` command line
-├── tests/                   pytest suite (splits, metrics, models, Grad-CAM, ONNX, API)
+├── scripts/                 reproduce.sh, deploy_space.py
+├── tests/                   pytest suite (splits, metrics, models, Grad-CAM, ONNX, API, web demo)
 ├── Dockerfile
 └── pyproject.toml
 ```

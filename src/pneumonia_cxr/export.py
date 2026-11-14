@@ -151,3 +151,49 @@ def export_onnx(run_dir: Path, out_dir: Path, opset: int = 18, check: bool = Tru
     meta["onnx_size_mb"] = round(onnx_path.stat().st_size / 1e6, 1)
     (out_dir / "model_meta.json").write_text(json.dumps(meta, indent=2))
     return onnx_path
+
+
+def export_browser_onnx(run_dir: Path, out_path: Path, opset: int = 18, fp16_weights: bool = True) -> Path:
+    """ONNX graph with two outputs, ``probability`` (N,) and ``cam`` (N, H, W) in [0, 1], for
+    in-browser inference with ONNX Runtime Web (Grad-CAM in closed form, no backward pass)."""
+    from .gradcam import ClosedFormGradCAM, GradCAM
+
+    out_path = Path(out_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    model, ckpt = load_checkpoint(run_dir, torch.device("cpu"))
+    size = ckpt["config"]["img_size"]
+    wrapped = ClosedFormGradCAM(model, ckpt["temperature"]).eval()
+    x = torch.rand(2, 1, size, size, generator=torch.Generator().manual_seed(0))
+
+    with torch.no_grad():
+        prob, cam = wrapped(x)
+    with GradCAM(model) as gc:  # the closed form must equal autograd Grad-CAM
+        ref_cam, ref_logit = gc(x)
+    cam_diff = float((cam - ref_cam).abs().max())
+    prob_diff = float((prob - torch.sigmoid(ref_logit / ckpt["temperature"])).abs().max())
+    if cam_diff > 1e-4 or prob_diff > 1e-5:
+        raise AssertionError(f"closed-form Grad-CAM mismatch: cam {cam_diff:.2e}, prob {prob_diff:.2e}")
+
+    torch.onnx.export(
+        wrapped,
+        (x,),
+        str(out_path),
+        input_names=["image"],
+        output_names=["probability", "cam"],
+        dynamic_shapes={"image": {0: torch.export.Dim("batch", min=1, max=64)}},
+        opset_version=opset,
+        dynamo=True,
+        external_data=False,
+    )
+    if fp16_weights:
+        store_onnx_weights_fp16(out_path)
+
+    import onnxruntime as ort
+
+    sess = ort.InferenceSession(str(out_path), providers=["CPUExecutionProvider"])
+    got_prob, got_cam = sess.run(None, {"image": x.numpy()})
+    diff = max(float(np.abs(got_prob - prob.numpy()).max()), float(np.abs(got_cam - cam.numpy()).max()))
+    print(f"Browser ONNX: closed-form vs autograd Grad-CAM {cam_diff:.1e}; torch vs onnxruntime {diff:.1e}")
+    if diff > 2e-2:
+        raise AssertionError(f"ONNX output differs from PyTorch by {diff}")
+    return out_path

@@ -6,7 +6,7 @@
   <title>CXR Pneumonia Assistant</title>
   <meta name="description" content="Research prototype: AI decision support for pneumonia on chest X-rays, with calibrated probability and Grad-CAM explanation.">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231c5cab'/%3E%3Cpath d='M15 8v6c0 3-2 4-4 4-1 0-2 2-2 4 0 3 3 3 6 1V8zm2 0v15c3 2 6 2 6-1 0-2-1-4-2-4-2 0-4-1-4-4V8z' fill='white'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="stylesheet" href="static/styles.css">
   <script>
     // Apply the saved theme before first paint to avoid a flash.
     try {
@@ -15,7 +15,8 @@
       if (t) document.documentElement.dataset.theme = t;
     } catch (e) {}
   </script>
-  <script src="/static/app.js" defer></script>
+  <!-- ENGINE -->
+  <script src="static/app.js" defer></script>
 </head>
 <body>
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -29,6 +30,7 @@
     <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></symbol>
     <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
     <symbol id="i-code" viewBox="0 0 24 24"><path d="m8.5 7-5 5 5 5M15.5 7l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="1.7"/></symbol>
     <symbol id="i-reset" viewBox="0 0 24 24"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3M4.5 4v3.5H8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   </svg>
 
@@ -65,6 +67,7 @@
         <span class="drop-or"><span data-i18n="drop_or">or</span> <span class="link" data-i18n="browse">browse files</span></span>
         <span class="drop-hint" data-i18n="drop_hint">PNG, JPEG or DICOM · frontal view (PA/AP)</span>
       </label>
+      <p class="privacy-note" id="privacy-note" hidden><svg class="icon"><use href="#i-lock"/></svg><span data-i18n="privacy_note">Runs entirely in your browser: images are never uploaded.</span></p>
 
       <h2 class="panel-title" data-i18n="samples">Sample studies</h2>
       <p class="hint" data-i18n="samples_hint">Held-out test images with a known reference label</p>
@@ -102,6 +105,7 @@
           <svg class="empty-icon"><use href="#i-lungs"/></svg>
           <p class="empty-title" data-i18n="empty_title">No study loaded</p>
           <p class="empty-text" data-i18n="empty_text">Upload a frontal chest X-ray or choose a sample study to start the analysis.</p>
+          <p class="engine-status" id="engine-status" hidden></p>
         </div>
         <div class="frames" id="frames" hidden>
           <figure class="frame" id="frame-a">
@@ -196,7 +200,7 @@
   <footer class="footer">
     <span data-i18n="footer">Built by Emir Mutlu · MIT License</span>
     <a href="https://github.com/emir-mutlu/pneumonia-cxr-detection/blob/main/MODEL_CARD.md" target="_blank" rel="noopener" data-i18n="model_card">Model card</a>
-    <a href="/api/docs" target="_blank" rel="noopener">API</a>
+    <a href="api/docs" id="api-link" target="_blank" rel="noopener">API</a>
   </footer>
 </body>
 </html>

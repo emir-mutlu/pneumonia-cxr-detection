@@ -78,3 +78,58 @@ def localisation_scores(cam: np.ndarray, mask: np.ndarray) -> dict[str, float]:
         "energy_in_box": float(cam[mask].sum() / total) if total > 0 else 0.0,
         "box_fraction": float(mask.mean()),
     }
+
+
+class ClosedFormGradCAM(nn.Module):
+    """Probability and Grad-CAM in a single forward pass, without autograd.
+
+    For heads of the form ``global average pool -> [LayerNorm] -> Linear`` the gradient of the
+    logit with respect to the last feature map is the same at every spatial position, so the
+    Grad-CAM channel weights have a closed form:
+
+    * linear head:            alpha_k = w_k / (H * W)
+    * LayerNorm + linear head: alpha = (g - mean(g) - x_hat * mean(g * x_hat)) / (sigma * H * W),
+      with g = w * gamma and x_hat the normalised pooled features.
+
+    Because it needs no backward pass, the module exports to ONNX and runs anywhere ONNX
+    Runtime does, including in a web browser. It matches :class:`GradCAM` to float precision.
+    Supported backbones: timm ConvNeXt and timm ResNet-style models.
+    """
+
+    def __init__(self, model: PneumoniaNet, temperature: float = 1.0):
+        super().__init__()
+        self.model = model
+        self.register_buffer("temperature", torch.tensor(float(temperature)))
+        head = getattr(model.backbone, "head", None)
+        if head is not None and hasattr(head, "norm") and hasattr(head, "fc"):
+            self.kind = "layernorm_linear"  # ConvNeXt: NormMlpClassifierHead
+            if not isinstance(getattr(head, "pre_logits", nn.Identity()), nn.Identity):
+                raise ValueError("ConvNeXt heads with a hidden MLP are not supported")
+        elif isinstance(getattr(model.backbone, "fc", None), nn.Linear):
+            self.kind = "linear"  # ResNet-style: global_pool + fc
+        else:
+            raise ValueError(f"No closed-form Grad-CAM for {type(model.backbone).__name__}")
+
+    def forward(self, image: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        backbone = self.model.backbone
+        feats = backbone.forward_features(self.model.normalise(image))  # (B, C, h, w)
+        pooled = feats.mean((2, 3))
+        if self.kind == "layernorm_linear":
+            ln, fc = backbone.head.norm, backbone.head.fc
+            mu = pooled.mean(1, keepdim=True)
+            sigma = torch.sqrt(pooled.var(1, unbiased=False, keepdim=True) + ln.eps)
+            x_hat = (pooled - mu) / sigma
+            logit = ((x_hat * ln.weight + ln.bias) @ fc.weight.t() + fc.bias).squeeze(1)
+            g = fc.weight[0] * ln.weight
+            d_pooled = (g - g.mean() - x_hat * (g * x_hat).mean(1, keepdim=True)) / sigma
+        else:
+            fc = backbone.fc
+            logit = (pooled @ fc.weight.t() + fc.bias).squeeze(1)
+            d_pooled = fc.weight[0].expand_as(pooled)
+        alpha = d_pooled / (feats.shape[2] * feats.shape[3])
+        cam = F.relu((alpha[:, :, None, None] * feats).sum(1, keepdim=True))
+        cam = F.interpolate(cam, size=image.shape[-2:], mode="bilinear", align_corners=False).squeeze(1)
+        flat = cam.flatten(1)
+        lo, hi = flat.min(1, keepdim=True).values, flat.max(1, keepdim=True).values
+        cam = ((flat - lo) / (hi - lo).clamp_min(1e-8)).view_as(cam)
+        return torch.sigmoid(logit / self.temperature), cam

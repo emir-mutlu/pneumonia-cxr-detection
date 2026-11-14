@@ -88,6 +88,13 @@ const I18N = {
     report_perf: "Validated performance",
     footer: "Built by Emir Mutlu · MIT License",
     model_card: "Model card",
+    privacy_note: "Runs entirely in your browser: images are never uploaded.",
+    drop_hint_browser: "PNG or JPEG · frontal view (PA/AP)",
+    model_loading: "Loading the AI model",
+    model_ready: "AI model ready",
+    model_failed: "The AI model could not be loaded. Please reload the page.",
+    err_dicom: "DICOM files need the server version. Please use PNG or JPEG here.",
+    err_decode: "Could not decode the image (PNG or JPEG expected).",
   },
   tr: {
     app_title: "Göğüs Röntgeni Pnömoni Asistanı",
@@ -175,8 +182,38 @@ const I18N = {
     report_perf: "Doğrulanmış performans",
     footer: "Geliştiren: Emir Mutlu · MIT Lisansı",
     model_card: "Model kartı",
+    privacy_note: "Tamamen tarayıcınızda çalışır: görüntüler hiçbir sunucuya yüklenmez.",
+    drop_hint_browser: "PNG veya JPEG · ön görünüm (PA/AP)",
+    model_loading: "Yapay zekâ modeli yükleniyor",
+    model_ready: "Yapay zekâ modeli hazır",
+    model_failed: "Yapay zekâ modeli yüklenemedi. Lütfen sayfayı yenileyin.",
+    err_dicom: "DICOM dosyaları yalnızca sunucu sürümünde desteklenir. Lütfen PNG veya JPEG kullanın.",
+    err_decode: "Görüntü okunamadı (PNG veya JPEG bekleniyor).",
   },
 };
+
+/* ---------------------------------------------------------------- engines */
+// Server engine: the FastAPI backend in app/web.py (PyTorch, Grad-CAM, DICOM support).
+const ServerEngine = {
+  name: "server",
+  async init() {},
+  modelInfo: () => fetch("api/model").then((r) => (r.ok ? r.json() : null)),
+  examples: () => fetch("api/examples").then((r) => r.json()),
+  exampleUrl: (file) => `examples/${encodeURIComponent(file)}`,
+  async analyse(file) {
+    const form = new FormData();
+    form.append("file", file, file.name);
+    const res = await fetch("api/analyse", { method: "POST", body: form });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(body.detail || "");
+    body.image.src = "data:image/png;base64," + body.image.png;
+    body.heatmap.src = "data:image/png;base64," + body.heatmap.png;
+    return body;
+  },
+};
+// Browser engine (static hosting): ONNX Runtime Web, see engine-browser.js.
+const CONFIG = window.CXR_CONFIG || {};
+const engine = CONFIG.engine === "browser" && window.BrowserEngine ? window.BrowserEngine : ServerEngine;
 
 const store = {
   get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
@@ -198,6 +235,8 @@ const state = {
   model: null,
   examples: [],
   busy: false,
+  engineStatus: engine.name === "browser" ? { phase: "loading", progress: 0 } : { phase: "ready" },
+  engineReady: Promise.resolve(),
 };
 
 const t = (key) => (I18N[state.lang] && I18N[state.lang][key]) ?? I18N.en[key] ?? key;
@@ -217,9 +256,30 @@ function applyI18n() {
   document.querySelectorAll("[data-i18n]").forEach((el) => { el.textContent = t(el.dataset.i18n); });
   document.querySelectorAll("[data-i18n-aria]").forEach((el) => el.setAttribute("aria-label", t(el.dataset.i18nAria)));
   document.querySelectorAll("[data-lang]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.lang === state.lang)));
+  if (engine.name === "browser") $(".drop-hint").textContent = t("drop_hint_browser");
+  renderEngine();
   renderSamples();
   renderModel();
   renderResult();
+}
+
+function renderEngine() {
+  const browser = engine.name === "browser";
+  $("#privacy-note").hidden = !browser;
+  $("#api-link").hidden = browser;
+  const status = $("#engine-status");
+  const s = state.engineStatus;
+  status.hidden = !browser || (s.phase === "ready" && Boolean(state.result));
+  if (!browser) return;
+  status.className = "engine-status " + s.phase;
+  if (s.phase === "loading") {
+    const mb = s.total ? ` · ${(s.got / 1e6).toFixed(0)} / ${(s.total / 1e6).toFixed(0)} MB` : "";
+    status.textContent = `${t("model_loading")} ${pct(s.progress || 0, 0)}${mb}`;
+  } else if (s.phase === "ready") {
+    status.textContent = `✓ ${t("model_ready")}`;
+  } else {
+    status.textContent = t("model_failed");
+  }
 }
 
 function renderSamples() {
@@ -233,7 +293,7 @@ function renderSamples() {
     btn.setAttribute("aria-current", String(state.study?.sample?.file === ex.file));
     btn.addEventListener("click", () => loadSample(ex));
     const img = document.createElement("img");
-    img.src = `/examples/${encodeURIComponent(ex.file)}`;
+    img.src = engine.exampleUrl(ex.file);
     img.alt = "";
     img.loading = "lazy";
     const text = document.createElement("span");
@@ -338,8 +398,8 @@ function renderViewer() {
   $("#opacity").disabled = state.mode === "original";
   if (!r) return;
 
-  const baseSrc = "data:image/png;base64," + r.image.png;
-  const heatSrc = "data:image/png;base64," + r.heatmap.png;
+  const baseSrc = r.image.src;
+  const heatSrc = r.heatmap.src;
   const filter = `brightness(${state.brightness}%) contrast(${state.contrast}%)${state.invert ? " invert(1)" : ""}`;
   const a = $("#frame-a");
   const b = $("#frame-b");
@@ -394,21 +454,22 @@ async function analyse(file, sample = null) {
   state.busy = true;
   state.error = null;
   $("#busy").hidden = false;
-  const form = new FormData();
-  form.append("file", file, file.name);
   try {
-    const res = await fetch("/api/analyse", { method: "POST", body: form });
-    const body = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(body.detail || t("error_generic"));
-    state.result = body;
+    await state.engineReady;
+    const result = await engine.analyse(file);
+    for (const old of [state.result?.image?.src, state.result?.heatmap?.src]) {
+      if (old && old.startsWith("blob:")) URL.revokeObjectURL(old);
+    }
+    state.result = result;
     state.study = { name: file.name, sample, at: new Date() };
   } catch (err) {
     state.result = null;
     state.study = null;
-    state.error = err.message || t("error_generic");
+    state.error = (err.code && t("err_" + err.code)) || err.message || t("error_generic");
   } finally {
     state.busy = false;
     $("#busy").hidden = true;
+    renderEngine();
     renderSamples();
     renderResult();
     renderViewer();
@@ -416,7 +477,7 @@ async function analyse(file, sample = null) {
 }
 
 async function loadSample(ex) {
-  const res = await fetch(`/examples/${encodeURIComponent(ex.file)}`);
+  const res = await fetch(engine.exampleUrl(ex.file));
   const blob = await res.blob();
   await analyse(new File([blob], ex.file, { type: blob.type }), ex);
 }
@@ -508,9 +569,25 @@ async function init() {
   bind();
   applyI18n();
   renderViewer();
+  state.engineReady = engine
+    .init(CONFIG, (progress, got, total) => {
+      state.engineStatus = { phase: "loading", progress, got, total };
+      renderEngine();
+    })
+    .then(() => {
+      state.engineStatus = { phase: "ready" };
+      renderEngine();
+    })
+    .catch((err) => {
+      console.error(err);
+      state.engineStatus = { phase: "failed" };
+      renderEngine();
+      throw Object.assign(new Error(t("model_failed")), { code: "" });
+    });
+  state.engineReady.catch(() => {});
   const [model, examples] = await Promise.all([
-    fetch("/api/model").then((r) => r.json()).catch(() => null),
-    fetch("/api/examples").then((r) => r.json()).catch(() => []),
+    engine.modelInfo(CONFIG).catch(() => null),
+    engine.examples().catch(() => []),
   ]);
   state.model = model;
   state.examples = examples;

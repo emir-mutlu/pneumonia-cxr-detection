@@ -120,6 +120,18 @@ def export(
     typer.echo(f"Exported {path} ({path.stat().st_size / 1e6:.1f} MB)")
 
 
+@app.command("export-browser")
+def export_browser(
+    run_dir: Path = typer.Argument(..., exists=True),
+    out: Path = typer.Option(MODELS / "model_browser.onnx"),
+) -> None:
+    """Export ONNX with probability + closed-form Grad-CAM outputs, for ONNX Runtime Web."""
+    from .export import export_browser_onnx
+
+    path = export_browser_onnx(run_dir, out)
+    typer.echo(f"Exported {path} ({path.stat().st_size / 1e6:.1f} MB)")
+
+
 @app.command()
 def report(featured: str | None = typer.Option(None, help="Run name to feature in the figures.")) -> None:
     """Aggregate all evaluated runs into reports/results.md and figures."""

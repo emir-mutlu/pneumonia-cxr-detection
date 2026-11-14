@@ -1,5 +1,9 @@
 # Model card – pneumonia-cxr (released model in `models/`)
 
+Also published on Hugging Face as [emir-mutlu/pneumonia-cxr-convnext](https://huggingface.co/emir-mutlu/pneumonia-cxr-convnext)
+(ONNX with a closed-form Grad-CAM output) and runnable in the browser in the
+[live demo](https://huggingface.co/spaces/emir-mutlu/pneumonia-cxr-detection).
+
 | | |
 |---|---|
 | Model | ConvNeXt-Tiny (`convnext_tiny.fb_in22k_ft_in1k`, ImageNet-22k pre-training), single-logit head |

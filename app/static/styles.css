@@ -197,6 +197,22 @@ button { cursor: pointer; }
 .drop-or .link { color: var(--accent); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
 .drop-hint { font-size: 12px; color: var(--muted); margin-top: 4px; }
 
+.privacy-note {
+  display: flex; gap: 8px; align-items: flex-start;
+  font-size: 12.5px; color: var(--good); font-weight: 550;
+  padding: 8px 10px; border-radius: 8px; background: var(--good-bg);
+  border: 1px solid color-mix(in srgb, var(--good) 25%, transparent);
+}
+.privacy-note .icon { margin-top: 1px; }
+.engine-status { margin-top: 14px; font-size: 12.5px; font-variant-numeric: tabular-nums; color: var(--viewer-muted); }
+.engine-status.ready { color: #6fd36f; }
+.engine-status.failed { color: #ef7d7d; }
+.engine-status.loading::before {
+  content: ""; display: inline-block; width: 10px; height: 10px; margin-right: 8px; vertical-align: -1px;
+  border: 2px solid rgba(255, 255, 255, 0.25); border-top-color: #fff; border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
 /* sample list */
 .samples { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .sample {
