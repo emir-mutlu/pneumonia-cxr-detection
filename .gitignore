@@ -10,10 +10,10 @@ build/
 dist/
 
 # Data and experiment outputs (re-created by `pneumo download/prepare/train`)
-data/
-runs/
-runs_smoke/
-mlruns/
+/data/
+/runs/
+/runs_smoke/
+/mlruns/
 *.log
 .gradio/
 
