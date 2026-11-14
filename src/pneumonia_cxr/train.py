@@ -19,7 +19,7 @@ from tqdm import tqdm
 from .config import TrainConfig
 from .data.dataset import CXRDataset, make_dataset
 from .metrics import binary_metrics, fit_temperature, sigmoid, youden_threshold
-from .models import build_model, count_parameters
+from .models import build_model, count_parameters, get_device, load_checkpoint  # noqa: F401 (re-exported)
 from .paths import DATA_PROCESSED, RUNS
 
 
@@ -28,10 +28,6 @@ def seed_everything(seed: int) -> None:
     np.random.seed(seed)  # noqa: NPY002 - seeds the legacy global RNG used by third-party code
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
-
-
-def get_device() -> torch.device:
-    return torch.device("cuda" if torch.cuda.is_available() and torch.cuda.device_count() > 0 else "cpu")
 
 
 def _loader(ds, batch_size: int, shuffle: bool, num_workers: int) -> DataLoader:
@@ -205,12 +201,3 @@ def train(cfg: TrainConfig, runs_dir: Path = RUNS, processed_dir: Path = DATA_PR
         tracker.log_artifact(str(run_dir / "train_summary.json"))
         tracker.end_run()
     return run_dir
-
-
-def load_checkpoint(run_dir: Path, device: torch.device | None = None) -> tuple[nn.Module, dict]:
-    device = device or get_device()
-    ckpt = torch.load(Path(run_dir) / "model.pt", map_location=device, weights_only=False)
-    cfg = ckpt["config"]
-    model = build_model(cfg["arch"], pretrained=False, drop_path_rate=0.0)
-    model.load_state_dict(ckpt["state_dict"])
-    return model.to(device).eval(), ckpt

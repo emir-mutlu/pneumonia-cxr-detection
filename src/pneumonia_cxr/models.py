@@ -12,6 +12,8 @@ the same raw [0, 1] grayscale tensor.
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import timm
 import torch
 from torch import nn
@@ -108,3 +110,17 @@ def cam_target_layer(model: PneumoniaNet) -> nn.Module:
 
 def count_parameters(model: nn.Module) -> int:
     return sum(p.numel() for p in model.parameters())
+
+
+def get_device() -> torch.device:
+    return torch.device("cuda" if torch.cuda.is_available() and torch.cuda.device_count() > 0 else "cpu")
+
+
+def load_checkpoint(run_dir: str | Path, device: torch.device | None = None) -> tuple[PneumoniaNet, dict]:
+    """Load ``<run_dir>/model.pt`` (a run folder or the released ``models/`` folder)."""
+    device = device or get_device()
+    ckpt = torch.load(Path(run_dir) / "model.pt", map_location=device, weights_only=False)
+    cfg = ckpt["config"]
+    model = build_model(cfg["arch"], pretrained=False, drop_path_rate=0.0)
+    model.load_state_dict(ckpt["state_dict"])  # float16-stored weights are cast to float32 here
+    return model.to(device).eval(), ckpt

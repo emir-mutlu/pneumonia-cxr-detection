@@ -30,7 +30,7 @@ from pneumonia_cxr import __version__
 from pneumonia_cxr.data.imaging import preprocess_for_model
 from pneumonia_cxr.gradcam import GradCAM
 from pneumonia_cxr.inference import DISCLAIMER, decode_image
-from pneumonia_cxr.train import get_device, load_checkpoint
+from pneumonia_cxr.models import get_device, load_checkpoint
 
 HERE = Path(__file__).parent
 STATIC = HERE / "static"
