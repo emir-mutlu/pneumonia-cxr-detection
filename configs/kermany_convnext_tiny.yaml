@@ -1,0 +1,9 @@
+# Modern ConvNet (ConvNeXt-T, ImageNet-22k pre-training).
+name: kermany_convnext_tiny
+arch: convnext_tiny.fb_in22k_ft_in1k
+sources: [kermany]
+epochs: 12
+batch_size: 32
+lr: 1.0e-4
+weight_decay: 0.05
+drop_path_rate: 0.1

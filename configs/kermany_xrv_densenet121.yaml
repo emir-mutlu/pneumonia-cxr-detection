@@ -1,0 +1,10 @@
+# In-domain transfer learning: DenseNet-121 pre-trained on CheXpert chest X-rays
+# (TorchXRayVision). CheXpert (Stanford) shares no images with Kermany or RSNA/NIH.
+name: kermany_xrv_densenet121
+arch: xrv_densenet121
+sources: [kermany]
+epochs: 12
+batch_size: 32
+lr: 1.0e-4
+weight_decay: 0.01
+drop_path_rate: 0.0

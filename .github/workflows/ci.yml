@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install (CPU PyTorch)
+        run: |
+          pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+          pip install -e ".[data,serve,dev]"
+      - name: Lint
+        run: |
+          ruff check .
+          ruff format --check .
+      - name: Tests
+        run: pytest
+
+  docker:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -t pneumonia-cxr .
+      - name: Smoke test the API
+        run: |
+          docker run -d -p 8000:8000 --name api pneumonia-cxr
+          for i in $(seq 1 30); do curl -sf localhost:8000/health && break; sleep 1; done
+          curl -sf localhost:8000/model
+          docker exec api python -c "from PIL import Image; Image.new('L', (512, 512), 128).save('/tmp/x.png')"
+          docker cp api:/tmp/x.png x.png
+          curl -sf -F "file=@x.png" localhost:8000/predict | tee response.json
+          grep -q probability_pneumonia response.json

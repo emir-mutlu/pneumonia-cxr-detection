@@ -1,0 +1,12 @@
+# Baseline: the original 2020 project idea - a small CNN trained from scratch on Kermany.
+name: kermany_simple_cnn
+arch: simple_cnn
+pretrained: false
+sources: [kermany]
+epochs: 20
+batch_size: 32
+lr: 1.0e-3
+weight_decay: 1.0e-4
+warmup_epochs: 1
+patience: 5
+drop_path_rate: 0.0

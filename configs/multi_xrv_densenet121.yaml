@@ -1,0 +1,11 @@
+# Multi-source training: pediatric (Kermany) + adult (RSNA). Model selection uses the mean
+# of per-source validation AUROCs so neither hospital dominates.
+name: multi_xrv_densenet121
+arch: xrv_densenet121
+sources: [kermany, rsna]
+epochs: 10
+batch_size: 32
+lr: 1.0e-4
+weight_decay: 0.01
+patience: 3
+drop_path_rate: 0.0

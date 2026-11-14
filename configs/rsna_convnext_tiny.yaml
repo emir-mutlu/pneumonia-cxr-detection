@@ -1,0 +1,10 @@
+# Adult-only training (RSNA) with ConvNeXt-T: control for the multi-source ConvNeXt run.
+name: rsna_convnext_tiny
+arch: convnext_tiny.fb_in22k_ft_in1k
+sources: [rsna]
+epochs: 10
+batch_size: 32
+lr: 1.0e-4
+weight_decay: 0.05
+patience: 3
+drop_path_rate: 0.1
