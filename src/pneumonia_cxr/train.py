@@ -31,7 +31,7 @@ def seed_everything(seed: int) -> None:
 
 
 def get_device() -> torch.device:
-    return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    return torch.device("cuda" if torch.cuda.is_available() and torch.cuda.device_count() > 0 else "cpu")
 
 
 def _loader(ds, batch_size: int, shuffle: bool, num_workers: int) -> DataLoader:

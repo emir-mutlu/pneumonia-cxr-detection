@@ -2,16 +2,41 @@
 
 from __future__ import annotations
 
+import io
 import json
 from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 
-from .data.imaging import preprocess_for_model
+from .data.imaging import preprocess_for_model, to_uint8_gray
 
 DISCLAIMER = "Research prototype - not a medical device and not for clinical decisions."
+
+
+def decode_image(data: bytes, filename: str = "") -> Image.Image:
+    """Decode PNG / JPEG / DICOM bytes into an 8-bit grayscale PIL image.
+
+    Raises ``ValueError`` if the bytes are not a readable image.
+    """
+    if filename.lower().endswith(".dcm") or data[128:132] == b"DICM":
+        try:
+            import pydicom
+        except ImportError as e:  # pragma: no cover
+            raise ValueError("DICOM support needs pydicom (pip install pydicom)") from e
+        try:
+            ds = pydicom.dcmread(io.BytesIO(data))
+            invert = getattr(ds, "PhotometricInterpretation", "") == "MONOCHROME1"
+            return to_uint8_gray(ds.pixel_array, invert=invert)
+        except Exception as e:
+            raise ValueError(f"Could not read the DICOM file: {e}") from e
+    try:
+        with Image.open(io.BytesIO(data)) as img:
+            img.load()
+            return to_uint8_gray(img)
+    except (UnidentifiedImageError, OSError) as e:
+        raise ValueError("Could not decode the image (PNG, JPEG or DICOM expected)") from e
 
 
 @dataclass

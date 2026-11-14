@@ -129,6 +129,21 @@ def report(featured: str | None = typer.Option(None, help="Run name to feature i
 
 
 @app.command()
+def demo(
+    model_dir: Path = typer.Option(MODELS, help="Folder with model.pt and model_meta.json."),
+    host: str = "127.0.0.1",
+    port: int = 7860,
+) -> None:
+    """Start the clinical web demo (viewer + Grad-CAM + findings) at http://HOST:PORT."""
+    import os
+
+    import uvicorn
+
+    os.environ["MODEL_DIR"] = str(model_dir)
+    uvicorn.run("app.web:app", host=host, port=port)
+
+
+@app.command()
 def predict(
     images: list[Path] = typer.Argument(..., exists=True),
     model_dir: Path = typer.Option(MODELS),

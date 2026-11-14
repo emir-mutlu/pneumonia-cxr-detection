@@ -6,16 +6,14 @@ Docker:        docker build -t pneumonia-cxr . && docker run -p 8000:8000 pneumo
 
 from __future__ import annotations
 
-import io
 import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
-from PIL import Image, UnidentifiedImageError
 
 from pneumonia_cxr import __version__
-from pneumonia_cxr.inference import DISCLAIMER, OnnxPredictor
+from pneumonia_cxr.inference import DISCLAIMER, OnnxPredictor, decode_image
 
 MODEL_DIR = Path(os.environ.get("MODEL_DIR", "models"))
 MAX_BYTES = 25 * 1024 * 1024
@@ -37,25 +35,6 @@ app = FastAPI(
 )
 
 
-def _decode(data: bytes, filename: str) -> Image.Image:
-    if filename.lower().endswith(".dcm") or data[128:132] == b"DICM":
-        try:
-            import pydicom
-        except ImportError as e:  # pragma: no cover
-            raise HTTPException(415, "DICOM support needs pydicom") from e
-        ds = pydicom.dcmread(io.BytesIO(data))
-        from pneumonia_cxr.data.imaging import to_uint8_gray
-
-        invert = getattr(ds, "PhotometricInterpretation", "") == "MONOCHROME1"
-        return to_uint8_gray(ds.pixel_array, invert=invert)
-    try:
-        img = Image.open(io.BytesIO(data))
-        img.load()
-        return img
-    except (UnidentifiedImageError, OSError) as e:
-        raise HTTPException(400, "Could not decode the image (PNG, JPEG or DICOM expected)") from e
-
-
 @app.get("/health")
 def health() -> dict:
     return {"status": "ok", "model_loaded": "predictor" in state}
@@ -73,5 +52,8 @@ async def predict(file: UploadFile = File(...)) -> dict:
         raise HTTPException(400, "Empty file")
     if len(data) > MAX_BYTES:
         raise HTTPException(413, "File larger than 25 MB")
-    image = _decode(data, file.filename or "")
+    try:
+        image = decode_image(data, file.filename or "")
+    except ValueError as e:
+        raise HTTPException(400, str(e)) from e
     return {"filename": file.filename, **state["predictor"].predict(image).to_dict()}

@@ -19,11 +19,35 @@
 * **Leakage found and fixed**: RSNA's 29,684 "patients" are really images of only **12,233
   patients**; splits use the true NIH patient id.
 * **Deployable**: 57 MB ONNX model (fp16-stored weights, fp32 compute, identical AUROC),
-  ~30 ms per image on CPU, torch-free FastAPI + Docker service, Gradio demo with live Grad-CAM.
+  ~30 ms per image on CPU, torch-free FastAPI + Docker service, and a clinical-style web viewer
+  (English / Turkish) with live Grad-CAM.
 
-![Grad-CAM on correctly detected pneumonia; blue boxes are radiologist annotations](reports/figures/gradcam_examples.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="reports/figures/demo_dark.png">
+  <img alt="Clinical web demo: X-ray viewer with Grad-CAM overlay and a structured AI findings panel" src="reports/figures/demo.png">
+</picture>
 
 > **Not a medical device.** Research and portfolio project; not validated for clinical use.
+
+## Web demo
+
+```bash
+pneumo demo          # http://localhost:7860 (uses the released model in models/)
+```
+
+A reading-room style viewer built for clinicians rather than ML engineers, with no external
+scripts or fonts, so it runs offline on a hospital network:
+
+* **Viewer**: dark PACS-like canvas with original / heatmap / side-by-side modes, overlay opacity,
+  brightness, contrast and invert, and a marker on the strongest activation.
+* **AI findings**: status shown with an icon and wording, not colour alone. The panel gives the
+  calibrated probability, a meter with the decision threshold, a borderline warning near the
+  threshold, and the strongest-evidence location in radiological convention ("right lung, lower
+  zone").
+* **Context for the reader**: validated sensitivity / specificity per population, known weak
+  subgroups, the model version and a non-diagnostic disclaimer on every screen.
+* **Workflow**: PNG / JPEG / DICOM upload, drag & drop or paste, sample studies with reference
+  labels, copy-to-clipboard report, a print layout, English / Turkish and light / dark themes.
 
 ---
 
@@ -42,7 +66,7 @@ and fixes each of those weaknesses:
 | In-distribution test only | **External validation** on the other hospital and age group, **subgroup analysis** by sex, age and view |
 | Over-confident probabilities | **Temperature scaling**, ECE and reliability diagrams |
 | Hand-picked heatmaps | **Grad-CAM scored against radiologist boxes** (pointing game, energy-in-box vs. random baselines) |
-| Notebook | Installable package, CLI, YAML configs, tests, CI, **ONNX export, FastAPI + Docker (torch-free), Gradio demo** |
+| Notebook | Installable package, CLI, YAML configs, tests, CI, **ONNX export, FastAPI + Docker (torch-free), clinical web viewer** |
 
 ## Results
 
@@ -179,7 +203,8 @@ RSNA 70/10/20. Details, split tables, data-quality findings and required citatio
   falls inside the boxes, each against the score of an uninformative map.
 * **Serving**: ONNX export (opset 18, dynamic batch, calibration folded into the graph, parity
   check against PyTorch), torch-free `OnnxPredictor`, FastAPI service accepting PNG/JPEG/DICOM,
-  slim Docker image, Gradio demo with live Grad-CAM.
+  slim Docker image, and a FastAPI + vanilla JS web viewer that computes Grad-CAM on a single
+  dedicated model thread (≈60 ms per study on GPU).
 
 ## Quickstart
 
@@ -195,7 +220,7 @@ pip install -e ".[data,xrv,serve,dev]"
 
 ```bash
 pneumo predict app/examples/kermany_pneumonia.jpeg      # ONNX Runtime, CPU
-python app/gradio_app.py                                 # demo with Grad-CAM at http://localhost:7860
+pneumo demo                                              # web viewer with Grad-CAM at http://localhost:7860
 uvicorn app.api:app --port 8000                          # REST API, docs at http://localhost:8000/docs
 curl -F "file=@app/examples/rsna_lung_opacity.png" localhost:8000/predict
 ```
@@ -227,7 +252,8 @@ to track runs with MLflow (`pip install -e ".[track]"`).
 ```
 ├── app/
 │   ├── api.py               FastAPI service (ONNX Runtime, no PyTorch)
-│   ├── gradio_app.py        interactive demo with Grad-CAM
+│   ├── web.py               web demo backend: analysis + Grad-CAM endpoint
+│   ├── static/              viewer UI (HTML, CSS, JS; no external dependencies)
 │   └── examples/            three held-out test images (with attribution)
 ├── configs/                 one YAML per experiment
 ├── docs/DATASETS.md         sources, licenses, splits, data-quality findings

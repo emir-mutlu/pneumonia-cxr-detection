@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CXR Pneumonia Assistant</title>
+  <meta name="description" content="Research prototype: AI decision support for pneumonia on chest X-rays, with calibrated probability and Grad-CAM explanation.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231c5cab'/%3E%3Cpath d='M15 8v6c0 3-2 4-4 4-1 0-2 2-2 4 0 3 3 3 6 1V8zm2 0v15c3 2 6 2 6-1 0-2-1-4-2-4-2 0-4-1-4-4V8z' fill='white'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/static/styles.css">
+  <script>
+    // Apply the saved theme before first paint to avoid a flash.
+    try {
+      const q = new URLSearchParams(location.search).get("theme");
+      const t = q === "light" || q === "dark" ? q : localStorage.getItem("cxr-theme");
+      if (t) document.documentElement.dataset.theme = t;
+    } catch (e) {}
+  </script>
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-lungs" viewBox="0 0 24 24"><path d="M11 3v6.5c0 2.2-1.6 3.2-3 3.2C6.2 12.7 4 15.4 4 18.6 4 21 6.4 21.6 9 20.2c1.3-.7 2-1.9 2-3.4V3m2 0v13.8c0 1.5.7 2.7 2 3.4 2.6 1.4 5 .8 5-1.6 0-3.2-2.2-5.9-4-5.9-1.4 0-3-1-3-3.2V3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 15V4m0 0L7.5 8.5M12 4l4.5 4.5M5 15v3.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3.5 2.8 19.5h18.4L12 3.5Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M12 10v4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="17.2" r="1.1" fill="currentColor"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="m8 12.3 2.7 2.7L16.2 9.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 11v5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="7.8" r="1.1" fill="currentColor"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="11.5" height="11.5" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M15.5 5.5V5A1.5 1.5 0 0 0 14 3.5H5.5A1.5 1.5 0 0 0 4 5v8.5A1.5 1.5 0 0 0 5.5 15H6" fill="none" stroke="currentColor" stroke-width="1.7"/></symbol>
+    <symbol id="i-print" viewBox="0 0 24 24"><path d="M7 8V3.5h10V8M7 16.5H5A1.5 1.5 0 0 1 3.5 15v-5.5A1.5 1.5 0 0 1 5 8h14a1.5 1.5 0 0 1 1.5 1.5V15a1.5 1.5 0 0 1-1.5 1.5h-2M7 13.5h10v7H7z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+    <symbol id="i-code" viewBox="0 0 24 24"><path d="m8.5 7-5 5 5 5M15.5 7l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-reset" viewBox="0 0 24 24"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3M4.5 4v3.5H8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  </svg>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark"><svg><use href="#i-lungs"/></svg></span>
+      <div>
+        <h1 data-i18n="app_title">Chest X-ray Pneumonia Assistant</h1>
+        <p class="brand-sub" data-i18n="app_sub">AI decision support · research prototype</p>
+      </div>
+    </div>
+    <div class="ruo" role="note"><svg class="icon"><use href="#i-alert"/></svg><span data-i18n="ruo">Research use only · not for diagnosis</span></div>
+    <div class="top-actions">
+      <div class="segmented small" role="group" aria-label="Language">
+        <button type="button" data-lang="tr">TR</button>
+        <button type="button" data-lang="en">EN</button>
+      </div>
+      <button type="button" class="icon-btn" id="theme-toggle" data-i18n-aria="theme_toggle" aria-label="Toggle dark mode">
+        <svg class="icon only-light"><use href="#i-moon"/></svg>
+        <svg class="icon only-dark"><use href="#i-sun"/></svg>
+      </button>
+      <a class="icon-btn" href="https://github.com/emir-mutlu/pneumonia-cxr-detection" target="_blank" rel="noopener" data-i18n-aria="github" aria-label="Source code"><svg class="icon"><use href="#i-code"/></svg></a>
+    </div>
+  </header>
+
+  <main class="workspace">
+    <!-- Left: study -->
+    <aside class="panel study" aria-labelledby="study-h">
+      <h2 id="study-h" class="panel-title" data-i18n="load_study">Load study</h2>
+      <label class="dropzone" id="dropzone">
+        <input type="file" id="file-input" accept=".png,.jpg,.jpeg,.dcm,image/png,image/jpeg,application/dicom">
+        <svg class="drop-icon"><use href="#i-upload"/></svg>
+        <span class="drop-title" data-i18n="drop_title">Drop a chest X-ray here</span>
+        <span class="drop-or"><span data-i18n="drop_or">or</span> <span class="link" data-i18n="browse">browse files</span></span>
+        <span class="drop-hint" data-i18n="drop_hint">PNG, JPEG or DICOM · frontal view (PA/AP)</span>
+      </label>
+
+      <h2 class="panel-title" data-i18n="samples">Sample studies</h2>
+      <p class="hint" data-i18n="samples_hint">Held-out test images with a known reference label</p>
+      <ul class="samples" id="samples"></ul>
+
+      <h2 class="panel-title" data-i18n="info">Study information</h2>
+      <dl class="kv" id="study-info">
+        <div><dt data-i18n="info_file">File</dt><dd id="info-file">–</dd></div>
+        <div><dt data-i18n="info_size">Matrix</dt><dd id="info-size">–</dd></div>
+        <div><dt data-i18n="info_loaded">Analysed</dt><dd id="info-time">–</dd></div>
+      </dl>
+    </aside>
+
+    <!-- Centre: viewer -->
+    <section class="viewer" aria-label="Image viewer">
+      <div class="toolbar" role="toolbar">
+        <div class="tool-group">
+          <div class="segmented dark" role="group" id="mode-group">
+            <button type="button" data-mode="original" data-i18n="mode_original">Original</button>
+            <button type="button" data-mode="overlay" data-i18n="mode_overlay">Heatmap</button>
+            <button type="button" data-mode="split" data-i18n="mode_split">Side by side</button>
+          </div>
+          <label class="slider"><span data-i18n="opacity">Overlay</span><input type="range" id="opacity" min="0" max="100" value="70"></label>
+        </div>
+        <div class="tool-group">
+          <label class="slider"><span data-i18n="brightness">Brightness</span><input type="range" id="brightness" min="50" max="150" value="100"></label>
+          <label class="slider"><span data-i18n="contrast">Contrast</span><input type="range" id="contrast" min="50" max="200" value="100"></label>
+          <label class="toggle"><input type="checkbox" id="invert"><span data-i18n="invert">Invert</span></label>
+          <button type="button" class="tool-btn" id="reset-view" data-i18n-aria="reset" aria-label="Reset"><svg class="icon"><use href="#i-reset"/></svg></button>
+        </div>
+      </div>
+
+      <div class="stage" id="stage">
+        <div class="empty" id="empty">
+          <svg class="empty-icon"><use href="#i-lungs"/></svg>
+          <p class="empty-title" data-i18n="empty_title">No study loaded</p>
+          <p class="empty-text" data-i18n="empty_text">Upload a frontal chest X-ray or choose a sample study to start the analysis.</p>
+        </div>
+        <div class="frames" id="frames" hidden>
+          <figure class="frame" id="frame-a">
+            <img class="base" alt="">
+            <img class="overlay" alt="">
+            <span class="peak" aria-hidden="true"></span>
+            <figcaption class="frame-tag"></figcaption>
+          </figure>
+          <figure class="frame" id="frame-b">
+            <img class="base" alt="">
+            <img class="overlay" alt="">
+            <span class="peak" aria-hidden="true"></span>
+            <figcaption class="frame-tag"></figcaption>
+          </figure>
+        </div>
+        <div class="busy" id="busy" hidden><span class="spinner"></span><span data-i18n="analysing">Analysing…</span></div>
+      </div>
+
+      <div class="legend" id="legend">
+        <span data-i18n="legend_low">Lower</span>
+        <span class="legend-bar" aria-hidden="true"></span>
+        <span data-i18n="legend_high">Higher contribution</span>
+        <span class="legend-note" data-i18n="legend_note">Grad-CAM: regions that most increased the pneumonia score</span>
+      </div>
+    </section>
+
+    <!-- Right: findings -->
+    <aside class="panel findings" aria-labelledby="findings-h">
+      <div class="print-only print-header">
+        <strong data-i18n="report_header">AI-assisted chest X-ray analysis</strong>
+        <span id="print-meta"></span>
+      </div>
+      <h2 id="findings-h" class="panel-title" data-i18n="findings">AI findings</h2>
+      <div id="result" aria-live="polite">
+        <div class="card placeholder" id="placeholder">
+          <p class="placeholder-title" data-i18n="awaiting">Awaiting a study</p>
+          <p class="hint" data-i18n="awaiting_text">Results appear here after analysis.</p>
+        </div>
+        <div class="card result-card" id="result-card" hidden>
+          <div class="status" id="status">
+            <svg class="status-icon"><use href="#i-check"/></svg>
+            <div><p class="status-title" id="status-title"></p><p class="status-sub" id="status-sub"></p></div>
+          </div>
+          <p class="borderline" id="borderline" hidden><svg class="icon"><use href="#i-alert"/></svg><span data-i18n="borderline">Close to the decision threshold – interpret with caution.</span></p>
+          <div class="hero">
+            <span class="hero-value" id="prob-value">–</span>
+            <span class="hero-caption" data-i18n="prob_caption">Calibrated probability of pneumonia</span>
+          </div>
+          <div class="meter" id="meter" role="img">
+            <div class="meter-track"><div class="meter-fill" id="meter-fill"></div><div class="meter-tick" id="meter-tick"></div></div>
+            <div class="meter-scale"><span>0</span><span class="meter-thr" id="meter-thr"></span><span>100</span></div>
+          </div>
+          <dl class="kv">
+            <div><dt data-i18n="evidence">Strongest evidence</dt><dd id="evidence">–</dd></div>
+            <div id="ref-row" hidden><dt data-i18n="reference">Reference label</dt><dd id="reference">–</dd></div>
+            <div><dt data-i18n="time">Analysis time</dt><dd id="elapsed">–</dd></div>
+          </dl>
+          <p class="hint small" data-i18n="evidence_note">Patient's side, radiological convention (image left = patient's right).</p>
+          <div class="actions no-print">
+            <button type="button" class="btn" id="copy-report"><svg class="icon"><use href="#i-copy"/></svg><span id="copy-label" data-i18n="copy">Copy report</span></button>
+            <button type="button" class="btn" id="print-report"><svg class="icon"><use href="#i-print"/></svg><span data-i18n="print">Print</span></button>
+          </div>
+        </div>
+        <div class="card error-card" id="error-card" hidden role="alert">
+          <p class="status-title" data-i18n="error_title">Analysis failed</p>
+          <p class="hint" id="error-text"></p>
+        </div>
+      </div>
+
+      <h2 class="panel-title" data-i18n="perf">Validated performance</h2>
+      <div class="card">
+        <table class="perf">
+          <thead><tr><th data-i18n="population">Population</th><th data-i18n="sens">Sensitivity</th><th data-i18n="spec">Specificity</th><th>AUROC</th></tr></thead>
+          <tbody id="perf-body"></tbody>
+        </table>
+        <p class="hint small" data-i18n="perf_note">Held-out test sets; threshold fixed before testing.</p>
+      </div>
+
+      <h2 class="panel-title" data-i18n="model">Model</h2>
+      <div class="card">
+        <p class="model-desc" data-i18n="model_desc">ConvNeXt-Tiny</p>
+        <dl class="kv compact">
+          <div><dt data-i18n="threshold">Decision threshold</dt><dd id="model-thr">–</dd></div>
+          <div><dt data-i18n="model_version">Version</dt><dd id="model-version">–</dd></div>
+        </dl>
+      </div>
+
+      <p class="disclaimer"><svg class="icon"><use href="#i-info"/></svg><span data-i18n="disclaimer">Not a medical device.</span></p>
+    </aside>
+  </main>
+
+  <footer class="footer">
+    <span data-i18n="footer">Built by Emir Mutlu · MIT License</span>
+    <a href="https://github.com/emir-mutlu/pneumonia-cxr-detection/blob/main/MODEL_CARD.md" target="_blank" rel="noopener" data-i18n="model_card">Model card</a>
+    <a href="/api/docs" target="_blank" rel="noopener">API</a>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,26 @@
+[
+  {
+    "file": "kermany_pneumonia.jpeg",
+    "source": "kermany",
+    "population": "pediatric",
+    "view": "AP",
+    "reference": "pneumonia",
+    "note": "Bacterial pneumonia (Kermany test set)"
+  },
+  {
+    "file": "kermany_normal.jpeg",
+    "source": "kermany",
+    "population": "pediatric",
+    "view": "AP",
+    "reference": "normal",
+    "note": "Normal (Kermany test set)"
+  },
+  {
+    "file": "rsna_lung_opacity.png",
+    "source": "rsna",
+    "population": "adult",
+    "view": "PA",
+    "reference": "pneumonia",
+    "note": "Lung opacity (RSNA test split)"
+  }
+]
