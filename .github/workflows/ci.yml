@@ -17,13 +17,23 @@ jobs:
       - name: Install (CPU PyTorch)
         run: |
           pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
-          pip install -e ".[data,serve,dev]"
+          pip install -e ".[data,serve,dev]" pytest-github-actions-annotate-failures
       - name: Lint
         run: |
           ruff check .
           ruff format --check .
       - name: Tests
-        run: pytest
+        shell: bash
+        run: |
+          set +e
+          pytest -rfE 2>&1 | tee pytest.log
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ]; then
+            # Surface the failure summary as an annotation (visible without opening the log).
+            summary=$(grep -E "^(FAILED|ERROR|E  )" pytest.log | head -12 | tr '\n' ' ' | cut -c1-1500)
+            echo "::error title=pytest failed::${summary}"
+          fi
+          exit "$status"
 
   docker:
     needs: test
