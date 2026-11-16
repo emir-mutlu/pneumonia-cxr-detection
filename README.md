@@ -18,8 +18,9 @@
 * **A third hospital keeps it honest**: on 1,397 children from Vietnam (VinDr-PCXR, never used for
   training or tuning) the released model drops to AUROC **0.746**, and its threshold catches only
   7 % of pneumonia cases. Models trained on Chinese children transfer *worse* to Vietnamese
-  children (0.59–0.66) than models trained on US adults (0.71–0.73). A new site needs its own
-  data and operating point.
+  children (0.59–0.66) than models trained on US adults (0.71–0.73). Even inside that hospital,
+  X-rays from its minority imaging systems drop the released model to chance (AUROC 0.48 vs
+  0.75 on the main system). A new site needs its own data, operating point and per-device check.
 * **Local data and a per-site threshold close most of that gap**: adding VinDr-PCXR's training
   split raises the Vietnam AUROC to **0.833** and sensitivity from 7 % to **74 %**, keeps 0.990 /
   0.886 on the other two hospitals and cuts calibration error to about a third. The cost: Grad-CAM
@@ -259,6 +260,33 @@ detector noise, erased corner markers).
 * **Conclusion**: generalisation has to come from more hospitals in training (the 3-site model:
   +0.087 on Vietnam) and, at each new site, from local validation and recalibration
   (`pneumo calibrate`, see [Quickstart](#quickstart)).
+
+### 6. The X-ray machine matters, even inside one hospital
+
+VinDr-PCXR removes manufacturer tags, but the DICOM headers still separate its X-ray systems:
+96 % of images come from one system that stores inverted pixels (MONOCHROME1); the remaining
+4 % come from other systems (MONOCHROME2, several encodings and pixel spacings).
+
+| Model (VinDr-PCXR test) | Main system, 1,337 images | Other systems, 60 images | Other systems: sens / spec |
+|---|---|---|---|
+| Released, Kermany + RSNA † | 0.748 (0.702–0.791) | **0.484** (0.304–0.656) | 0.16 / 1.00 |
+| ConvNeXt-T, RSNA only † | 0.733 | 0.581 | 0.24 / 0.97 |
+| DenseNet-121 (CXR-pretrained), RSNA only † | 0.689 | 0.768 | 0.76 / 0.77 |
+| 3-site model (trained on VinDr-PCXR) | 0.820 | 0.763 | **0.96 / 0.23** |
+
+* **Unseen machines break unseen-hospital models.** Every model without chest X-ray pre-training
+  that never saw this hospital scores 0.33–0.58 on its minority systems, versus 0.57–0.75 on the
+  main one. The released model is at chance there.
+* **Seen machines become shortcuts.** In VinDr-PCXR's training split, 44 % of the minority-system
+  images show pneumonia, versus 11 % on the main system. All six models trained on it flag those
+  images almost wholesale (sensitivity 0.92–1.00, specificity 0.11–0.29): they learned "this
+  machine means pneumonia", the same trap as AP/bedside views in RSNA.
+* **A hint, not a result**: the DenseNets pre-trained on CheXpert's many devices and trained on
+  RSNA hold up better on the minority systems (0.76–0.77). With 25 pneumonia cases in that group
+  the CIs are about ±0.18.
+* **What this means for a new hospital** (including in Turkey, where no public chest X-ray dataset
+  exists yet): collect validation X-rays from *every* machine, report results per machine, and
+  check that no machine has an unusual share of positive cases before training on its images.
 
 <details>
 <summary>More figures: ROC curves, confusion matrices, training curves, Grad-CAM examples</summary>

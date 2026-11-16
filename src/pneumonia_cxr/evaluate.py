@@ -59,7 +59,8 @@ def _child_age_group(age: float) -> str:
 
 
 def vindr_subgroup_metrics(df: pd.DataFrame, threshold: float) -> dict[str, dict]:
-    """VinDr-PCXR: sex, age band (Kermany covers 1-5 y) and pneumonia vs 'No finding' only.
+    """VinDr-PCXR: sex, age band (Kermany covers 1-5 y), X-ray system (pixel polarity, a proxy
+    for the device since manufacturer tags are removed) and pneumonia vs 'No finding' only.
 
     Subgroups need at least 10 positives and 10 negatives; smaller ones give meaningless AUROCs.
     """
@@ -70,7 +71,10 @@ def vindr_subgroup_metrics(df: pd.DataFrame, threshold: float) -> dict[str, dict
         return {**{k: m[k] for k in keys}, "n_positive": int(g["label"].sum())}
 
     out: dict[str, dict] = {}
-    for name, key in {"sex": df["sex"], "age": df["age"].map(_child_age_group)}.items():
+    groupings = {"sex": df["sex"], "age": df["age"].map(_child_age_group)}
+    if "photometric" in df:
+        groupings["system"] = df["photometric"]
+    for name, key in groupings.items():
         for value, g in df.groupby(key):
             n_pos = int(g["label"].sum())
             if value == "unknown" or min(n_pos, len(g) - n_pos) < 10:

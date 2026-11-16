@@ -87,6 +87,8 @@ def test_prepare_end_to_end(tmp_path):
     assert (meta["split"] == "test").sum() == 6 and set(meta.loc[meta["split"] == "test", "official_split"]) == {"test"}
     assert {"train", "val"} <= set(meta["split"])
     assert meta["age"].between(0, 9).all() and (meta["sex"] == "F").all()
+    assert (meta["photometric"] == "MONOCHROME1").all() and (meta["bits_stored"] == 12).all()
+    assert meta["transfer_syntax"].str.contains("Little Endian").all()
     images = np.load(out_dir / "vindr_pcxr_images.npy")
     assert images.shape == (26, 16, 16) and images.dtype == np.uint8
     summary = json.loads((out_dir / "vindr_pcxr_summary.json").read_text())
@@ -107,6 +109,7 @@ def test_vindr_subgroups():
             "sex": rng.choice(["F", "M"], n),
             "age": rng.choice([0.5, 3.0, 7.0, -1.0], n),
             "vindr_class": rng.choice(["pneumonia", "no_finding", "other"], n),
+            "photometric": rng.choice(["MONOCHROME1", "MONOCHROME2"], n),
         }
     )
     df.loc[df["vindr_class"] == "pneumonia", "label"] = 1
@@ -114,4 +117,6 @@ def test_vindr_subgroups():
     df["prob"] = np.clip(df["label"] * 0.6 + rng.random(n) * 0.5, 0, 1)
     sub = vindr_subgroup_metrics(df, threshold=0.5)
     assert {"sex=F", "sex=M", "age=<1y", "age=1-4y", "age=5-9y", "pneumonia_vs_no_finding_only"} <= set(sub)
+    assert {"system=MONOCHROME1", "system=MONOCHROME2"} <= set(sub)
+    assert all(v["n_positive"] >= 10 for k, v in sub.items() if k != "pneumonia_vs_no_finding_only")
     assert sub["pneumonia_vs_no_finding_only"]["n"] == int(df["vindr_class"].isin(["pneumonia", "no_finding"]).sum())

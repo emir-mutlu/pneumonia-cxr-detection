@@ -149,23 +149,31 @@ def results_table(runs: list[dict]) -> str:
 
 
 def third_site_table(runs: list[dict], src: str = "vindr_pcxr") -> str:
-    """Every model on a hospital none of them was trained on, with the clinically relevant splits."""
+    """VinDr-PCXR per model, with the clinically relevant splits and the X-ray system groups
+    (MONOCHROME1 = the main system, 96 % of images; MONOCHROME2 = other systems)."""
     lines = [
-        "| Model | Train data | AUROC (95% CI) | Sens / Spec | Pneumonia vs no finding only | AUROC <1 y / 1–4 y |",
-        "|---|---|---|---|---|---|",
+        "| Model | Train data | AUROC (95% CI) | Sens / Spec | Pneumonia vs no finding only | AUROC <1 y / 1–4 y "
+        "| AUROC main / other X-ray systems | Other systems: Sens / Spec |",
+        "|---|---|---|---|---|---|---|---|",
     ]
+
+    def auc(sub: dict, *keys: str) -> str:
+        return " / ".join(f"{sub[k]['auroc']:.3f}" if k in sub else "–" for k in keys)
+
     for r in runs:
         m = r["eval"].get(src)
         if m is None:
             continue
         sub = m.get("subgroups", {})
-        ages = " / ".join(f"{sub[k]['auroc']:.3f}" if k in sub else "–" for k in ("age=<1y", "age=1-4y"))
         strict = sub.get("pneumonia_vs_no_finding_only")
+        other = sub.get("system=MONOCHROME2")
         star = "" if m["in_distribution"] else " †"
         lines.append(
             f"| {ARCH_NAMES.get(r['config']['arch'], r['config']['arch'])} | {train_desc(r['config'])} | "
             f"{_fmt_ci(m, 'auroc')}{star} | {m['sensitivity']:.3f} / {m['specificity']:.3f}{_site_mark(m)} | "
-            f"{strict['auroc'] if strict else float('nan'):.3f} | {ages} |"
+            f"{strict['auroc'] if strict else float('nan'):.3f} | {auc(sub, 'age=<1y', 'age=1-4y')} | "
+            f"{auc(sub, 'system=MONOCHROME1', 'system=MONOCHROME2')} | "
+            + (f"{other['sensitivity']:.2f} / {other['specificity']:.2f} |" if other else "– |")
         )
     return "\n".join(lines)
 
@@ -428,7 +436,10 @@ def build_report(runs_dir: Path = RUNS, out_dir: Path = REPORTS, featured: str |
             "Positive = Pneumonia, Broncho-pneumonia or Pleuro-pneumonia; negative = everything else, including "
             "bronchitis and bronchiolitis. † external: the model never saw this hospital and uses the global "
             "threshold from its own validation data; models trained on VinDr-PCXR use their VinDr-PCXR validation "
-            "threshold. Children aged 5–9 are left out of the age columns (fewer than 10 pneumonia cases).\n",
+            "threshold. Children aged 5–9 are left out of the age columns (fewer than 10 pneumonia cases). "
+            "X-ray systems: manufacturer tags are removed in this dataset, so pixel polarity separates the main "
+            "system (MONOCHROME1, 1,337 test images, 11 % pneumonia) from the other systems (MONOCHROME2, 60 "
+            "images, 42 % pneumonia; 44 % in training).\n",
             third_site_table(runs),
         ]
     loso = loso_table(runs)

@@ -68,6 +68,16 @@ def parse_age_years(value: str) -> float:
     return round(int(m[1]) / {"D": 365.25, "W": 52.1775, "M": 12.0, "Y": 1.0}[m[2]], 3)
 
 
+def acquisition_info(ds) -> dict:
+    """Technical fingerprint of the imaging system. Manufacturer tags are removed in VinDr-PCXR,
+    but pixel polarity, encoding and bit depth still separate the X-ray systems."""
+    return {
+        "photometric": str(ds.get("PhotometricInterpretation", "") or ""),
+        "transfer_syntax": ds.file_meta.TransferSyntaxUID.name if "TransferSyntaxUID" in ds.file_meta else "",
+        "bits_stored": int(ds.get("BitsStored", 0) or 0),
+    }
+
+
 def _read_dicom(args: tuple[str, int]) -> tuple[np.ndarray, dict]:
     import pydicom
 
@@ -80,6 +90,7 @@ def _read_dicom(args: tuple[str, int]) -> tuple[np.ndarray, dict]:
         "view": str(getattr(ds, "ViewPosition", "") or ""),
         "sex": str(getattr(ds, "PatientSex", "") or ""),
         "age": parse_age_years(getattr(ds, "PatientAge", "") or ""),
+        **acquisition_info(ds),
     }
     return resize_square(img, size), info
 
@@ -129,7 +140,7 @@ def prepare_vindr_pcxr(
 
     cols = [
         "idx", "source", "image_id", "patient_id", "label", "vindr_class", "official_split",
-        "view", "sex", "age", "orig_w", "orig_h", "split",
+        "view", "sex", "age", "photometric", "transfer_syntax", "bits_stored", "orig_w", "orig_h", "split",
     ]  # fmt: skip
     meta = meta[cols]
     meta.to_csv(meta_path(SOURCE, out_dir), index=False)
@@ -151,6 +162,8 @@ def summarise(meta: pd.DataFrame) -> dict:
         },
         "sex": {str(k): int(v) for k, v in meta["sex"].replace("", "unknown").value_counts().items()},
         "view": {str(k): int(v) for k, v in meta["view"].replace("", "unknown").value_counts().items()},
+        "photometric": {str(k): int(v) for k, v in meta["photometric"].value_counts().items()},
+        "transfer_syntax": {str(k): int(v) for k, v in meta["transfer_syntax"].value_counts().items()},
         "age_years": {
             "known": int((meta["age"] >= 0).sum()),
             "median": float(meta.loc[meta["age"] >= 0, "age"].median()) if (meta["age"] >= 0).any() else None,

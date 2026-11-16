@@ -245,6 +245,7 @@
         "fp": 346,
         "tn": 881,
         "fn": 96,
+        "threshold_kind": "global",
         "ece_uncalibrated": 0.19290510703614594,
         "in_distribution": false,
         "ci95": {
@@ -305,6 +306,22 @@
             "sensitivity": 0.48,
             "specificity": 0.5011547344110855,
             "n_positive": 75
+          },
+          "system=MONOCHROME1": {
+            "n": 1337,
+            "prevalence": 0.10845175766641735,
+            "auroc": 0.6070874797500577,
+            "sensitivity": 0.35172413793103446,
+            "specificity": 0.738255033557047,
+            "n_positive": 145
+          },
+          "system=MONOCHROME2": {
+            "n": 60,
+            "prevalence": 0.4166666666666667,
+            "auroc": 0.32971428571428574,
+            "sensitivity": 0.92,
+            "specificity": 0.02857142857142857,
+            "n_positive": 25
           },
           "pneumonia_vs_no_finding_only": {
             "n": 1077,
@@ -580,6 +597,7 @@
         "fp": 171,
         "tn": 1056,
         "fn": 122,
+        "threshold_kind": "global",
         "ece_uncalibrated": 0.1417668413503721,
         "in_distribution": false,
         "ci95": {
@@ -640,6 +658,22 @@
             "sensitivity": 0.29333333333333333,
             "specificity": 0.8060046189376443,
             "n_positive": 75
+          },
+          "system=MONOCHROME1": {
+            "n": 1337,
+            "prevalence": 0.10845175766641735,
+            "auroc": 0.5739470030085629,
+            "sensitivity": 0.22758620689655173,
+            "specificity": 0.8800335570469798,
+            "n_positive": 145
+          },
+          "system=MONOCHROME2": {
+            "n": 60,
+            "prevalence": 0.4166666666666667,
+            "auroc": 0.40857142857142853,
+            "sensitivity": 0.6,
+            "specificity": 0.2,
+            "n_positive": 25
           },
           "pneumonia_vs_no_finding_only": {
             "n": 1077,
@@ -915,6 +949,7 @@
         "fp": 212,
         "tn": 1015,
         "fn": 122,
+        "threshold_kind": "global",
         "ece_uncalibrated": 0.17987563638242413,
         "in_distribution": false,
         "ci95": {
@@ -975,6 +1010,22 @@
             "sensitivity": 0.28,
             "specificity": 0.7528868360277137,
             "n_positive": 75
+          },
+          "system=MONOCHROME1": {
+            "n": 1337,
+            "prevalence": 0.10845175766641735,
+            "auroc": 0.5720261513538533,
+            "sensitivity": 0.22758620689655173,
+            "specificity": 0.8439597315436241,
+            "n_positive": 145
+          },
+          "system=MONOCHROME2": {
+            "n": 60,
+            "prevalence": 0.4166666666666667,
+            "auroc": 0.5,
+            "sensitivity": 0.6,
+            "specificity": 0.2571428571428571,
+            "n_positive": 25
           },
           "pneumonia_vs_no_finding_only": {
             "n": 1077,
@@ -1250,6 +1301,7 @@
         "fp": 64,
         "tn": 1163,
         "fn": 138,
+        "threshold_kind": "global",
         "ece_uncalibrated": 0.13359023604032116,
         "in_distribution": false,
         "ci95": {
@@ -1310,6 +1362,22 @@
             "sensitivity": 0.17333333333333334,
             "specificity": 0.9353348729792148,
             "n_positive": 75
+          },
+          "system=MONOCHROME1": {
+            "n": 1337,
+            "prevalence": 0.10845175766641735,
+            "auroc": 0.6356919694515158,
+            "sensitivity": 0.11724137931034483,
+            "specificity": 0.9672818791946308,
+            "n_positive": 145
+          },
+          "system=MONOCHROME2": {
+            "n": 60,
+            "prevalence": 0.4166666666666667,
+            "auroc": 0.40685714285714286,
+            "sensitivity": 0.6,
+            "specificity": 0.2857142857142857,
+            "n_positive": 25
           },
           "pneumonia_vs_no_finding_only": {
             "n": 1077,
@@ -1585,6 +1653,7 @@
         "fp": 226,
         "tn": 1001,
         "fn": 104,
+        "threshold_kind": "global",
         "ece_uncalibrated": 0.06079500812650328,
         "in_distribution": false,
         "ci95": {
@@ -1645,6 +1714,22 @@
             "sensitivity": 0.41333333333333333,
             "specificity": 0.5935334872979214,
             "n_positive": 75
+          },
+          "system=MONOCHROME1": {
+            "n": 1337,
+            "prevalence": 0.10845175766641735,
+            "auroc": 0.6888683175190927,
+            "sensitivity": 0.32413793103448274,
+            "specificity": 0.8171140939597316,
+            "n_positive": 145
+          },
+          "system=MONOCHROME2": {
+            "n": 60,
+            "prevalence": 0.4166666666666667,
+            "auroc": 0.7679999999999999,
+            "sensitivity": 0.76,
+            "specificity": 0.7714285714285715,
+            "n_positive": 25
           },
           "pneumonia_vs_no_finding_only": {
             "n": 1077,
@@ -1920,6 +2005,7 @@
         "fp": 46,
         "tn": 1181,
         "fn": 126,
+        "threshold_kind": "global",
         "ece_uncalibrated": 0.08998998384194419,
         "in_distribution": false,
         "ci95": {
@@ -1980,6 +2066,22 @@
             "sensitivity": 0.18666666666666668,
             "specificity": 0.9722863741339491,
             "n_positive": 75
+          },
+          "system=MONOCHROME1": {
+            "n": 1337,
+            "prevalence": 0.10845175766641735,
+            "auroc": 0.7332127979634344,
+            "sensitivity": 0.2620689655172414,
+            "specificity": 0.962248322147651,
+            "n_positive": 145
+          },
+          "system=MONOCHROME2": {
+            "n": 60,
+            "prevalence": 0.4166666666666667,
+            "auroc": 0.5811428571428571,
+            "sensitivity": 0.24,
+            "specificity": 0.9714285714285714,
+            "n_positive": 25
           },
           "pneumonia_vs_no_finding_only": {
             "n": 1077,
@@ -2257,6 +2359,7 @@
         "fp": 118,
         "tn": 1109,
         "fn": 137,
+        "threshold_kind": "global",
         "ece_uncalibrated": 0.1052460886028011,
         "in_distribution": false,
         "ci95": {
@@ -2317,6 +2420,22 @@
             "sensitivity": 0.16,
             "specificity": 0.8036951501154734,
             "n_positive": 75
+          },
+          "system=MONOCHROME1": {
+            "n": 1337,
+            "prevalence": 0.10845175766641735,
+            "auroc": 0.6275804211987966,
+            "sensitivity": 0.11724137931034483,
+            "specificity": 0.9077181208053692,
+            "n_positive": 145
+          },
+          "system=MONOCHROME2": {
+            "n": 60,
+            "prevalence": 0.4166666666666667,
+            "auroc": 0.7565714285714286,
+            "sensitivity": 0.64,
+            "specificity": 0.7714285714285715,
+            "n_positive": 25
           },
           "pneumonia_vs_no_finding_only": {
             "n": 1077,
@@ -2594,6 +2713,7 @@
         "fp": 9,
         "tn": 1218,
         "fn": 158,
+        "threshold_kind": "global",
         "ece_uncalibrated": 0.08828108101858541,
         "in_distribution": false,
         "ci95": {
@@ -2654,6 +2774,22 @@
             "sensitivity": 0.08,
             "specificity": 0.9907621247113164,
             "n_positive": 75
+          },
+          "system=MONOCHROME1": {
+            "n": 1337,
+            "prevalence": 0.10845175766641735,
+            "auroc": 0.7480560055542698,
+            "sensitivity": 0.05517241379310345,
+            "specificity": 0.9924496644295302,
+            "n_positive": 145
+          },
+          "system=MONOCHROME2": {
+            "n": 60,
+            "prevalence": 0.4166666666666667,
+            "auroc": 0.48400000000000004,
+            "sensitivity": 0.16,
+            "specificity": 1.0,
+            "n_positive": 25
           },
           "pneumonia_vs_no_finding_only": {
             "n": 1077,
@@ -3013,6 +3149,22 @@
             "specificity": 0.9353348729792148,
             "n_positive": 75
           },
+          "system=MONOCHROME1": {
+            "n": 1337,
+            "prevalence": 0.10845175766641735,
+            "auroc": 0.7421083082619764,
+            "sensitivity": 0.2827586206896552,
+            "specificity": 0.959731543624161,
+            "n_positive": 145
+          },
+          "system=MONOCHROME2": {
+            "n": 60,
+            "prevalence": 0.4166666666666667,
+            "auroc": 0.5634285714285714,
+            "sensitivity": 0.16,
+            "specificity": 1.0,
+            "n_positive": 25
+          },
           "pneumonia_vs_no_finding_only": {
             "n": 1077,
             "prevalence": 0.15784586815227483,
@@ -3370,6 +3522,22 @@
             "sensitivity": 0.6533333333333333,
             "specificity": 0.7505773672055427,
             "n_positive": 75
+          },
+          "system=MONOCHROME1": {
+            "n": 1337,
+            "prevalence": 0.10845175766641735,
+            "auroc": 0.8166512381393195,
+            "sensitivity": 0.6206896551724138,
+            "specificity": 0.8330536912751678,
+            "n_positive": 145
+          },
+          "system=MONOCHROME2": {
+            "n": 60,
+            "prevalence": 0.4166666666666667,
+            "auroc": 0.6982857142857143,
+            "sensitivity": 0.96,
+            "specificity": 0.2,
+            "n_positive": 25
           },
           "pneumonia_vs_no_finding_only": {
             "n": 1077,
@@ -3729,6 +3897,22 @@
             "specificity": 0.7066974595842956,
             "n_positive": 75
           },
+          "system=MONOCHROME1": {
+            "n": 1337,
+            "prevalence": 0.10845175766641735,
+            "auroc": 0.8154188845174728,
+            "sensitivity": 0.6482758620689655,
+            "specificity": 0.7885906040268457,
+            "n_positive": 145
+          },
+          "system=MONOCHROME2": {
+            "n": 60,
+            "prevalence": 0.4166666666666667,
+            "auroc": 0.7537142857142858,
+            "sensitivity": 1.0,
+            "specificity": 0.2,
+            "n_positive": 25
+          },
           "pneumonia_vs_no_finding_only": {
             "n": 1077,
             "prevalence": 0.15784586815227483,
@@ -4087,6 +4271,22 @@
             "specificity": 0.5773672055427251,
             "n_positive": 75
           },
+          "system=MONOCHROME1": {
+            "n": 1337,
+            "prevalence": 0.10845175766641735,
+            "auroc": 0.8228072205507984,
+            "sensitivity": 0.7586206896551724,
+            "specificity": 0.7348993288590604,
+            "n_positive": 145
+          },
+          "system=MONOCHROME2": {
+            "n": 60,
+            "prevalence": 0.4166666666666667,
+            "auroc": 0.8022857142857143,
+            "sensitivity": 1.0,
+            "specificity": 0.11428571428571428,
+            "n_positive": 25
+          },
           "pneumonia_vs_no_finding_only": {
             "n": 1077,
             "prevalence": 0.15784586815227483,
@@ -4444,6 +4644,22 @@
             "sensitivity": 0.5866666666666667,
             "specificity": 0.8060046189376443,
             "n_positive": 75
+          },
+          "system=MONOCHROME1": {
+            "n": 1337,
+            "prevalence": 0.10845175766641735,
+            "auroc": 0.8253211062254108,
+            "sensitivity": 0.593103448275862,
+            "specificity": 0.8573825503355704,
+            "n_positive": 145
+          },
+          "system=MONOCHROME2": {
+            "n": 60,
+            "prevalence": 0.4166666666666667,
+            "auroc": 0.6354285714285715,
+            "sensitivity": 0.92,
+            "specificity": 0.2857142857142857,
+            "n_positive": 25
           },
           "pneumonia_vs_no_finding_only": {
             "n": 1077,
@@ -4806,6 +5022,22 @@
             "sensitivity": 0.7866666666666666,
             "specificity": 0.6720554272517321,
             "n_positive": 75
+          },
+          "system=MONOCHROME1": {
+            "n": 1337,
+            "prevalence": 0.10845175766641735,
+            "auroc": 0.8204408701689424,
+            "sensitivity": 0.696551724137931,
+            "specificity": 0.7743288590604027,
+            "n_positive": 145
+          },
+          "system=MONOCHROME2": {
+            "n": 60,
+            "prevalence": 0.4166666666666667,
+            "auroc": 0.7628571428571429,
+            "sensitivity": 0.96,
+            "specificity": 0.22857142857142856,
+            "n_positive": 25
           },
           "pneumonia_vs_no_finding_only": {
             "n": 1077,
@@ -5172,6 +5404,22 @@
             "sensitivity": 0.8266666666666667,
             "specificity": 0.5912240184757506,
             "n_positive": 75
+          },
+          "system=MONOCHROME1": {
+            "n": 1337,
+            "prevalence": 0.10845175766641735,
+            "auroc": 0.8104981485767182,
+            "sensitivity": 0.7655172413793103,
+            "specificity": 0.7105704697986577,
+            "n_positive": 145
+          },
+          "system=MONOCHROME2": {
+            "n": 60,
+            "prevalence": 0.4166666666666667,
+            "auroc": 0.7988571428571428,
+            "sensitivity": 1.0,
+            "specificity": 0.17142857142857143,
+            "n_positive": 25
           },
           "pneumonia_vs_no_finding_only": {
             "n": 1077,

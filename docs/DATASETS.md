@@ -68,6 +68,7 @@ threshold, so the official train + validation images are pooled and re-split *by
 | Labels | One pediatric radiologist per image; 15 image-level columns (No finding + 14 diagnoses) |
 | Positive class here | Pneumonia, Broncho-pneumonia or Pleuro-pneumonia (12 % of the test set) |
 | Negatives | No finding, or only other diagnoses (bronchitis, bronchiolitis, …) as hard negatives |
+| X-ray systems | Manufacturer tags removed. 8,824 images (96.7 %) come from a main system storing inverted pixels (MONOCHROME1, 12-bit, mostly uncompressed or JPEG Lossless); 301 (3.3 %) come from other systems (MONOCHROME2, 8–14-bit, several pixel spacings). Pneumonia share: 11 % vs 44 %. Recorded per image as `photometric`, `transfer_syntax`, `bits_stored`. |
 | Size on disk | 23.4 GB ZIP, 34.1 GB extracted |
 | License | PhysioNet Restricted Health Data License 1.5.0: sign the data use agreement; research use only; never redistributed |
 | Source | [physionet.org/content/vindr-pcxr](https://physionet.org/content/vindr-pcxr/1.0.0/) |
