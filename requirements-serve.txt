@@ -5,4 +5,6 @@ pillow>=10
 fastapi>=0.110
 uvicorn>=0.29
 python-multipart>=0.0.9
-pydicom>=2.4
+pydicom>=3.0
+pylibjpeg>=2           # JPEG-Lossless DICOMs (common on CR/DX systems)
+pylibjpeg-libjpeg>=2

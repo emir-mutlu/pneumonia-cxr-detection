@@ -63,3 +63,31 @@ def test_rest_api(model_dir, png_bytes, monkeypatch):
         assert "not a medical device" in body["disclaimer"]
         bad = client.post("/predict", files={"file": ("x.png", b"not an image", "image/png")})
         assert bad.status_code == 400
+
+
+def test_serving_path_needs_no_torch_sklearn_scipy(model_dir, tmp_path):
+    """The Docker image ships only inference.py, site_profile.py, data/imaging.py and app/api.py on
+    ONNX Runtime + FastAPI. None of them may import torch, scikit-learn or scipy (a site-profile
+    import once broke the image at start-up)."""
+    import os
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+    code = f"""
+import sys
+for name in ("torch", "torchvision", "timm", "sklearn", "scipy"):
+    sys.modules[name] = None  # importing any of them now raises ImportError
+import numpy as np
+import app.api  # noqa: F401
+from pneumonia_cxr.inference import OnnxPredictor
+from pneumonia_cxr.site_profile import SiteProfile
+profile = SiteProfile("s", 1.0, 0.5, 0.3, 0.9, 10, 5).save(r"{tmp_path / "s.json"}")
+for site in (None, profile):
+    print(OnnxPredictor(r"{model_dir}", site_profile=site).predict(np.zeros((64, 64), np.uint8)).label)
+"""
+    env = {**os.environ, "PYTHONPATH": os.pathsep.join([str(root / "src"), str(root)])}
+    result = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, env=env, timeout=120)
+    assert result.returncode == 0, result.stderr[-2000:]
+    assert len(result.stdout.split()) == 2

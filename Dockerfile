@@ -10,7 +10,7 @@ WORKDIR /app
 COPY requirements-serve.txt .
 RUN pip install --no-cache-dir -r requirements-serve.txt
 
-COPY src/pneumonia_cxr/__init__.py src/pneumonia_cxr/inference.py src/pneumonia_cxr/
+COPY src/pneumonia_cxr/__init__.py src/pneumonia_cxr/inference.py src/pneumonia_cxr/site_profile.py src/pneumonia_cxr/
 COPY src/pneumonia_cxr/data/__init__.py src/pneumonia_cxr/data/imaging.py src/pneumonia_cxr/data/
 COPY app/__init__.py app/api.py app/
 COPY models/model.onnx models/model_meta.json models/

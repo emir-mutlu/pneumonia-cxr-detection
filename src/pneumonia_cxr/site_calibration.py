@@ -19,22 +19,16 @@ This is not a substitute for a prospective clinical study; it is the minimum che
 
 from __future__ import annotations
 
-import json
-from dataclasses import asdict, dataclass, field
-from datetime import date
-from pathlib import Path
-
 import numpy as np
 from scipy.optimize import minimize
 
 from .metrics import binary_metrics, bootstrap_ci, sigmoid, threshold_for_sensitivity, youden_threshold
+from .site_profile import SiteProfile
+from .site_profile import logit as _logit
+
+__all__ = ["SiteProfile", "calibrate_site", "fit_platt", "format_report"]
 
 MIN_PER_CLASS = 30  # below this, CIs are too wide to act on
-
-
-def _logit(p: np.ndarray) -> np.ndarray:
-    p = np.clip(np.asarray(p, dtype=np.float64), 1e-6, 1 - 1e-6)
-    return np.log(p / (1 - p))
 
 
 def fit_platt(logits: np.ndarray, y: np.ndarray, l2: float = 1e-3) -> tuple[float, float]:
@@ -54,33 +48,6 @@ def _choose_threshold(y: np.ndarray, p: np.ndarray, target_sensitivity: float | 
     if target_sensitivity is None:
         return youden_threshold(y, p)
     return threshold_for_sensitivity(y, p, target_sensitivity)
-
-
-@dataclass
-class SiteProfile:
-    site: str
-    platt_a: float
-    platt_b: float
-    threshold: float
-    target_sensitivity: float | None
-    n: int
-    n_positive: int
-    created: str = field(default_factory=lambda: date.today().isoformat())
-    report: dict = field(default_factory=dict)
-
-    def apply(self, prob: np.ndarray | float) -> np.ndarray:
-        """Model probability (already temperature-scaled) -> locally recalibrated probability."""
-        return sigmoid(self.platt_a * _logit(np.atleast_1d(prob)) + self.platt_b)
-
-    def save(self, path: str | Path) -> Path:
-        path = Path(path)
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(asdict(self), indent=2))
-        return path
-
-    @classmethod
-    def load(cls, path: str | Path) -> SiteProfile:
-        return cls(**json.loads(Path(path).read_text()))
 
 
 def calibrate_site(

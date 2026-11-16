@@ -61,8 +61,6 @@ class OnnxPredictor:
     ):
         import onnxruntime as ort
 
-        from .site_calibration import SiteProfile
-
         model_dir = Path(model_dir)
         self.meta = json.loads((model_dir / "model_meta.json").read_text())
         self.session = ort.InferenceSession(
@@ -71,7 +69,11 @@ class OnnxPredictor:
         self.img_size = int(self.meta["img_size"])
         self.cache_size = int(self.meta.get("cache_size", 256))
         self.model_threshold = float(self.meta["threshold"])
-        self.site = SiteProfile.load(site_profile) if site_profile else None
+        self.site = None
+        if site_profile:  # imported only when used; numpy-only, so it also works in the slim image
+            from .site_profile import SiteProfile
+
+            self.site = SiteProfile.load(site_profile)
         self.threshold = self.site.threshold if self.site else self.model_threshold
 
     def predict_raw(self, images: list[Image.Image | np.ndarray]) -> np.ndarray:
