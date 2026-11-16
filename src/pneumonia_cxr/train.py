@@ -175,12 +175,20 @@ def train(cfg: TrainConfig, runs_dir: Path = RUNS, processed_dir: Path = DATA_PR
     val_probs = sigmoid(val_logits / temperature)
     threshold = youden_threshold(val_y, val_probs)
     val_metrics = binary_metrics(val_y, val_probs, threshold)
+    # One global threshold cannot serve hospitals with different prevalence and image appearance,
+    # so every training source also gets its own Youden threshold on its own validation data.
+    site_thresholds, start = {}, 0
+    for s in cfg.sources:
+        end = start + len(val_sets[s])
+        site_thresholds[s] = youden_threshold(val_y[start:end], val_probs[start:end])
+        start = end
 
     checkpoint = {
         "config": cfg.to_dict(),
         "state_dict": model.state_dict(),
         "temperature": temperature,
         "threshold": threshold,
+        "site_thresholds": site_thresholds,
         "best_epoch": best_epoch,
         "val_metrics": val_metrics,
         "n_params": n_params,
@@ -191,7 +199,8 @@ def train(cfg: TrainConfig, runs_dir: Path = RUNS, processed_dir: Path = DATA_PR
     summary = {k: v for k, v in checkpoint.items() if k != "state_dict"}
     (run_dir / "train_summary.json").write_text(json.dumps(summary, indent=2))
     print(
-        f"[{cfg.name}] best epoch {best_epoch} | T={temperature:.3f} | threshold={threshold:.3f} | "
+        f"[{cfg.name}] best epoch {best_epoch} | T={temperature:.3f} | threshold={threshold:.3f} "
+        f"(per site: {', '.join(f'{s} {t:.3f}' for s, t in site_thresholds.items())}) | "
         f"val AUROC {val_metrics['auroc']:.4f}"
     )
     if tracker:

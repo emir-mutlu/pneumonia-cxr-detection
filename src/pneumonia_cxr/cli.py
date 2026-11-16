@@ -8,7 +8,7 @@ from pathlib import Path
 
 import typer
 
-from .paths import DATA_RAW, MODELS, REPORTS, RUNS, SOURCES
+from .paths import DATA_RAW, MODELS, PUBLIC_SOURCES, REPORTS, RUNS, SOURCES
 
 # Windows consoles default to cp1252; progress bars of some libraries print Unicode blocks.
 if hasattr(sys.stdout, "reconfigure"):
@@ -17,26 +17,42 @@ if hasattr(sys.stdout, "reconfigure"):
 app = typer.Typer(add_completion=False, no_args_is_help=True, help="Pneumonia detection from chest X-rays.")
 
 
-def _sources(source: str) -> list[str]:
+def _sources(source: str, allowed: tuple[str, ...] = SOURCES) -> list[str]:
+    """'all' means the public sources; access-controlled ones must be named explicitly."""
     if source == "all":
-        return list(SOURCES)
-    if source not in SOURCES:
-        raise typer.BadParameter(f"source must be one of {SOURCES} or 'all'")
+        return list(PUBLIC_SOURCES)
+    if source not in allowed:
+        raise typer.BadParameter(f"source must be one of {allowed} or 'all'")
     return [source]
 
 
 @app.command()
 def download(source: str = typer.Argument("all", help="kermany | rsna | all")) -> None:
-    """Download raw datasets from their public sources (resumable)."""
+    """Download the public datasets (resumable). VinDr-PCXR: see `pneumo physionet-import`."""
     from .data.download import download_kermany, download_rsna
 
-    for s in _sources(source):
+    for s in _sources(source, PUBLIC_SOURCES):
         (download_kermany if s == "kermany" else download_rsna)(DATA_RAW)
+
+
+@app.command("physionet-import")
+def physionet_import(
+    zip_file: Path = typer.Argument(..., exists=True, dir_okay=False, help="ZIP from the project's Files section."),
+    project: str = typer.Option(..., help="Folder name under data/raw, e.g. vindr-pcxr"),
+) -> None:
+    """Extract a PhysioNet ZIP into data/raw/<project> and verify it against SHA256SUMS.txt."""
+    from .data.physionet import import_zip, verify
+
+    out = import_zip(zip_file, DATA_RAW / project)
+    report = verify(out)
+    typer.echo(f"{out}\n{report}")
+    if not report.ok:
+        raise typer.Exit(1)
 
 
 @app.command()
 def prepare(
-    source: str = typer.Argument("all", help="kermany | rsna | all"),
+    source: str = typer.Argument("all", help="kermany | rsna | vindr_pcxr | all (= kermany + rsna)"),
     size: int = typer.Option(256, help="Side of the cached square images."),
     seed: int = 42,
 ) -> None:
@@ -46,10 +62,14 @@ def prepare(
             from .data.kermany import prepare_kermany
 
             prepare_kermany(size=size, seed=seed)
-        else:
+        elif s == "rsna":
             from .data.rsna import prepare_rsna
 
             prepare_rsna(size=size, seed=seed)
+        else:
+            from .data.vindr_pcxr import prepare_vindr_pcxr
+
+            prepare_vindr_pcxr(size=size, seed=seed)
         typer.echo((Path("data/processed") / f"{s}_summary.json").read_text())
 
 
@@ -75,13 +95,15 @@ def train(
 @app.command()
 def evaluate(
     run_dirs: list[Path] = typer.Argument(..., help="One or more runs/<name> folders."),
+    source: list[str] | None = typer.Option(None, "--source", help="Only these test sets; repeatable."),
     n_boot: int = 1000,
 ) -> None:
-    """Evaluate runs on the test split of every dataset (with bootstrap CIs)."""
+    """Evaluate runs on the test split of every prepared dataset (with bootstrap CIs)."""
     from .evaluate import evaluate_run
 
+    sources = tuple(dict.fromkeys(x for s in source for x in _sources(s))) if source else SOURCES
     for run_dir in run_dirs:
-        evaluate_run(run_dir, n_boot=n_boot)
+        evaluate_run(run_dir, sources=sources, n_boot=n_boot)
 
 
 @app.command()

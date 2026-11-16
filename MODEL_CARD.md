@@ -23,8 +23,16 @@ Also published on Hugging Face as [emir-mutlu/pneumonia-cxr-convnext](https://hu
 |---|---:|---|---:|---:|---:|---:|---:|
 | Kermany, pediatric | 624 (427) | 0.990 (0.982–0.995) | 0.995 | 0.838 | 0.911 | 0.990 | 0.068 |
 | RSNA, adult | 6,133 (2,446) | 0.890 (0.877–0.903) | 0.691 | 0.878 | 0.656 | 0.894 | 0.068 |
+| VinDr-PCXR, pediatric, Vietnam (external) | 1,397 (n/a) | 0.746 (0.702–0.789) | 0.071 | 0.993 | 0.571 | 0.885 | 0.083 |
 
-CIs are patient-clustered bootstrap intervals (1,000 resamples). Subgroup results (sex, age, view)
+The third row is a hospital the model never saw: at the stored threshold it finds only 7 % of
+pneumonia cases there, and reaching 80 % sensitivity would need a threshold of 0.012
+(specificity 0.50). CIs are patient-clustered bootstrap intervals (1,000 resamples; image-level
+for VinDr-PCXR, which has no patient ids).
+
+A variant trained on all three hospitals with a threshold per site reaches 0.990 / 0.886 / 0.833
+(VinDr-PCXR sensitivity 0.735, specificity 0.759). It is not released, because its weights are
+derived from PhysioNet restricted data; see the README. Subgroup results (sex, age, view)
 and the comparison with seven other models are in the [README](README.md) and
 [reports/results.md](reports/results.md).
 
@@ -54,9 +62,11 @@ Challenge 2018 (NIH Clinical Center, USA; adults). Patient-level splits; see
 
 ## Ethical considerations and limitations
 
-* **Population shift**: both sources are from two hospitals. Performance on other countries,
-  scanners and age groups is unknown and can be much lower; the Kermany-only models lose about
-  0.15–0.21 AUROC on RSNA, and adult-only models score 0.07–0.11 lower on children than models trained on children.
+* **Population shift**: both training sources are from two hospitals, and performance elsewhere
+  can be much lower. The Kermany-only models lose about 0.15–0.21 AUROC on RSNA, and adult-only
+  models score 0.07–0.11 lower on children than models trained on children. On a third hospital
+  (VinDr-PCXR, Vietnamese children, median age 1 year) this model reaches AUROC 0.746, and only
+  0.681 for infants under one year.
 * **Threshold transfer**: a threshold tuned on one hospital can give very different sensitivity
   / specificity on another (see the external results in `reports/results.md`). Any new site
   needs local validation and its own operating point.

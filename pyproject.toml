@@ -33,7 +33,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-data = ["pydicom>=2.4"]
+data = ["pydicom>=3.0", "pylibjpeg>=2", "pylibjpeg-libjpeg>=2"]
 xrv = ["torchxrayvision>=1.2"]
 serve = [
   "onnx>=1.16",

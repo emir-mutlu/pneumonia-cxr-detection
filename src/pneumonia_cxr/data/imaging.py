@@ -40,6 +40,25 @@ def to_uint8_gray(img: Image.Image | np.ndarray, invert: bool = False) -> Image.
     return Image.fromarray(arr, mode="L")
 
 
+def dicom_to_gray(ds) -> Image.Image:
+    """pydicom Dataset -> 8-bit grayscale image with bone bright, as a DICOM viewer shows it.
+
+    The modality LUT (rescale) and the stored display window (VOI LUT / WindowCenter-Width)
+    are applied when present, then MONOCHROME1 images are inverted. 8-bit images without a
+    stored window pass through unchanged. Compressed transfer syntaxes such as JPEG Lossless
+    need the ``pylibjpeg`` plugins (``pip install '.[data]'``).
+    """
+    from pydicom.pixels import apply_modality_lut, apply_voi_lut
+
+    pixels = ds.pixel_array
+    if pixels.ndim == 3 and pixels.shape[-1] not in (3, 4):  # multi-frame: keep the first frame
+        pixels = pixels[0]
+    if pixels.ndim == 2 and ("WindowCenter" in ds or "VOILUTSequence" in ds):
+        pixels = apply_voi_lut(apply_modality_lut(pixels, ds), ds)
+    invert = ds.get("PhotometricInterpretation", "MONOCHROME2") == "MONOCHROME1"
+    return to_uint8_gray(pixels, invert=invert)
+
+
 def resize_square(img: Image.Image, size: int = CACHE_SIZE) -> np.ndarray:
     """Anti-aliased bilinear resize to ``size`` x ``size``; returns a uint8 array."""
     if img.mode != "L":

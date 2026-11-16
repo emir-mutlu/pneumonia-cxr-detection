@@ -12,7 +12,8 @@ RUNS = ROOT / "runs"
 REPORTS = ROOT / "reports"
 MODELS = ROOT / "models"
 
-SOURCES = ("kermany", "rsna")
+SOURCES = ("kermany", "rsna", "vindr_pcxr")
+PUBLIC_SOURCES = ("kermany", "rsna")  # downloadable without an account; vindr_pcxr needs PhysioNet access
 
 
 def images_path(source: str, processed_dir: Path = DATA_PROCESSED) -> Path:

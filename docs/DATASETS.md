@@ -1,8 +1,10 @@
 # Datasets
 
-Two public chest X-ray datasets from different hospitals, countries and age groups are used.
-Neither is redistributed in this repository; `pneumo download` fetches them from their
-public sources and `pneumo prepare` builds the cached arrays and splits.
+Two public chest X-ray datasets from different hospitals, countries and age groups are used
+for training. A third, access-controlled dataset from a third country (VinDr-PCXR, see
+[below](#third-hospital-vindr-pcxr-external-test-only)) is used only as an external test set.
+None is redistributed in this repository; `pneumo download` fetches the public ones and
+`pneumo prepare` builds the cached arrays and splits.
 
 | | Kermany (Guangzhou) | RSNA Pneumonia Challenge 2018 |
 |---|---|---|
@@ -57,13 +59,46 @@ threshold, so the official train + validation images are pooled and re-split *by
 5. **RSNA age has impossible values** (max 412 years); ages above 110 are treated as unknown
    in subgroup analysis.
 
+## Third hospital: VinDr-PCXR (external test only)
+
+| | VinDr-PCXR v1.0.0 |
+|---|---|
+| Population | Children under 10 (median age 1 year), Phu Tho Obstetric & Pediatric Hospital, Vietnam, 2020–2021 |
+| Images | 9,125 DICOM (official split: 7,728 train, 1,397 test); no patient identifiers |
+| Labels | One pediatric radiologist per image; 15 image-level columns (No finding + 14 diagnoses) |
+| Positive class here | Pneumonia, Broncho-pneumonia or Pleuro-pneumonia (12 % of the test set) |
+| Negatives | No finding, or only other diagnoses (bronchitis, bronchiolitis, …) as hard negatives |
+| Size on disk | 23.4 GB ZIP, 34.1 GB extracted |
+| License | PhysioNet Restricted Health Data License 1.5.0: sign the data use agreement; research use only; never redistributed |
+| Source | [physionet.org/content/vindr-pcxr](https://physionet.org/content/vindr-pcxr/1.0.0/) |
+
+Used **only as an external test set**: no model was trained, selected, calibrated or
+thresholded on it. The official test split is kept; 15 % of the official training split is held
+out as validation for possible future training. Without patient ids, every image is treated as
+its own patient (image-level CIs).
+
+| split | images | pneumonia | no finding | other diagnoses only |
+|---|---:|---:|---:|---:|
+| train | 6,569 | 782 | 4,376 | 1,411 |
+| val | 1,159 | 138 | 767 | 254 |
+| test (official) | 1,397 | 170 | 907 | 320 |
+
+How to get it: sign the DUA on the project page, use "Download the ZIP file" in its Files
+section (PhysioNet's server delivers ≈0.6 MB/s, so ≈11 h), then run
+`pneumo physionet-import <zip> --project vindr-pcxr`, which extracts the archive safely and checks
+all 9,130 files against `SHA256SUMS.txt`, and `pneumo prepare vindr_pcxr`. Only aggregate metrics
+from this dataset appear in this repository.
+
 ## Preprocessing
 
-Every image is converted to 8-bit grayscale (MONOCHROME1 DICOMs are inverted, 16-bit data is
-min-max scaled), resized to 256 × 256 with anti-aliased bilinear interpolation and stored in a
-memory-mapped `uint8` array (`data/processed/<source>_images.npy`). Models see 224 × 224
-inputs in [0, 1]; normalisation for each backbone happens inside the model, so the exported
-ONNX graph and the API use exactly the same input.
+Every image is converted to 8-bit grayscale, resized to 256 × 256 with anti-aliased bilinear
+interpolation and stored in a memory-mapped `uint8` array (`data/processed/<source>_images.npy`).
+For DICOM, the modality and stored display window (VOI LUT) are applied when present, as a
+viewer would show the image, and MONOCHROME1 images are inverted. Other 16-bit data is min-max
+scaled. VinDr-PCXR's 12-bit images carry such windows; part of them are JPEG-Lossless compressed
+and need the `pylibjpeg` plugins (`pip install -e ".[data]"`). Models see 224 × 224 inputs in
+[0, 1]; normalisation for each backbone happens inside the model, so the exported ONNX graph and
+the API use exactly the same input.
 
 ## Required attribution
 
@@ -79,5 +114,10 @@ ONNX graph and the API use exactly the same input.
   Dataset with Expert Annotations of Possible Pneumonia.* Radiology: Artificial
   Intelligence 1(1). doi:10.1148/ryai.2019180041 —
   [RSNA download site](https://www.rsna.org/artificial-intelligence/ai-image-challenge/rsna-pneumonia-detection-challenge-2018).
+* Pham H. H., Tran T. T., Nguyen H. Q. (2022). *VinDr-PCXR: An open, large-scale pediatric chest
+  X-ray dataset for interpretation of common thoracic diseases* (version 1.0.0). PhysioNet.
+  doi:10.13026/k8qc-na36 — and the standard PhysioNet citation: Pollard T. et al. (2026).
+  *PhysioNet as a global platform for biomedical research.* Nature Health.
+  doi:10.1038/s44360-026-00096-z.
 * Chest X-ray pre-trained weights: Cohen J. P. et al. (2022). *TorchXRayVision: A library of
   chest X-ray datasets and models.* MIDL. CheXpert weights: Irvin J. et al. (2019). AAAI.

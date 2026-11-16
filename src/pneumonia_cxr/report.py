@@ -14,7 +14,7 @@ import pandas as pd
 from sklearn.metrics import confusion_matrix, roc_curve
 
 from .metrics import sigmoid
-from .paths import REPORTS, RUNS
+from .paths import REPORTS, RUNS, SOURCES
 
 # Validated categorical palette (fixed order) and recessive chart chrome, light surface.
 SERIES = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948"]
@@ -28,7 +28,11 @@ ARCH_NAMES = {
     "xrv_densenet121": "DenseNet-121 (CXR-pretrained)",
     "convnext_tiny.fb_in22k_ft_in1k": "ConvNeXt-T (ImageNet-22k)",
 }
-SOURCE_NAMES = {"kermany": "Kermany (pediatric)", "rsna": "RSNA (adult)"}
+SOURCE_NAMES = {
+    "kermany": "Kermany (pediatric)",
+    "rsna": "RSNA (adult)",
+    "vindr_pcxr": "VinDr-PCXR (pediatric, Vietnam)",
+}
 
 
 def _style() -> None:
@@ -60,9 +64,12 @@ def _style() -> None:
     )
 
 
+SHORT_SOURCE = {"kermany": "Kermany", "rsna": "RSNA", "vindr_pcxr": "VinDr-PCXR"}
+
+
 def model_label(cfg: dict) -> str:
     arch = ARCH_NAMES.get(cfg["arch"], cfg["arch"])
-    sources = "+".join(s.capitalize() if s == "kermany" else s.upper() for s in cfg["sources"])
+    sources = "+".join(SHORT_SOURCE.get(s, s) for s in cfg["sources"])
     return f"{arch} · trained on {sources}"
 
 
@@ -72,7 +79,7 @@ def collect_runs(runs_dir: Path = RUNS) -> list[dict]:
         summary = json.loads((run_dir / "train_summary.json").read_text())
         evals = {
             src: json.loads((run_dir / f"eval_{src}_test.json").read_text())
-            for src in ("kermany", "rsna")
+            for src in SOURCES
             if (run_dir / f"eval_{src}_test.json").exists()
         }
         loc_file = run_dir / "localisation_rsna_test.json"
@@ -91,9 +98,9 @@ def collect_runs(runs_dir: Path = RUNS) -> list[dict]:
 
 
 def _run_order(run: dict) -> tuple[int, int, str]:
-    """Single-source runs first (Kermany, then RSNA), multi-source last; within, by architecture."""
+    """Single-source runs first (Kermany, then RSNA), then two-, then three-source; within, by architecture."""
     sources = run["config"]["sources"]
-    group = 2 if len(sources) > 1 else (0 if sources == ["kermany"] else 1)
+    group = len(sources) if len(sources) > 1 else (0 if sources == ["kermany"] else 1)
     archs = list(ARCH_NAMES)
     arch = archs.index(run["config"]["arch"]) if run["config"]["arch"] in archs else len(archs)
     return group, arch, run["name"]
@@ -122,8 +129,31 @@ def results_table(runs: list[dict]) -> str:
         lines.append("| " + " | ".join(cells) + " |")
     lines.append("")
     lines.append(
-        "† external test set: hospital / population never seen in training; threshold transferred from the training data's validation split."
+        "† external test set: hospital / population never seen in training; threshold transferred from the training data's validation split. "
+        "The three-hospital run uses each training site's own validation threshold on that site's test set."
     )
+    return "\n".join(lines)
+
+
+def third_site_table(runs: list[dict], src: str = "vindr_pcxr") -> str:
+    """Every model on a hospital none of them was trained on, with the clinically relevant splits."""
+    lines = [
+        "| Model | Train data | AUROC (95% CI) | Sens / Spec | Pneumonia vs no finding only | AUROC <1 y / 1–4 y |",
+        "|---|---|---|---|---|---|",
+    ]
+    for r in runs:
+        m = r["eval"].get(src)
+        if m is None:
+            continue
+        sub = m.get("subgroups", {})
+        ages = " / ".join(f"{sub[k]['auroc']:.3f}" if k in sub else "–" for k in ("age=<1y", "age=1-4y"))
+        strict = sub.get("pneumonia_vs_no_finding_only")
+        star = "" if m["in_distribution"] else " †"
+        lines.append(
+            f"| {ARCH_NAMES.get(r['config']['arch'], r['config']['arch'])} | {' + '.join(r['config']['sources'])} | "
+            f"{_fmt_ci(m, 'auroc')}{star} | {m['sensitivity']:.3f} / {m['specificity']:.3f} | "
+            f"{strict['auroc'] if strict else float('nan'):.3f} | {ages} |"
+        )
     return "\n".join(lines)
 
 
@@ -159,10 +189,11 @@ def localisation_table(runs: list[dict]) -> str:
     return "\n".join(lines)
 
 
-def subgroup_table(run: dict) -> str:
-    sub = run["eval"]["rsna"]["subgroups"]
+def subgroup_table(run: dict, src: str = "rsna") -> str:
+    sub = run["eval"][src]["subgroups"]
+    name = {"rsna": "RSNA", "vindr_pcxr": "VinDr-PCXR"}.get(src, src)
     lines = [
-        "| Subgroup (RSNA test) | n | Prevalence | AUROC | Sensitivity | Specificity |",
+        f"| Subgroup ({name} test) | n | Prevalence | AUROC | Sensitivity | Specificity |",
         "|---|---:|---:|---:|---:|---:|",
     ]
     for k, m in sub.items():
@@ -172,9 +203,14 @@ def subgroup_table(run: dict) -> str:
     return "\n".join(lines)
 
 
+def _sources_present(runs: list[dict]) -> list[str]:
+    return [s for s in SOURCES if any(s in r["eval"] for r in runs)]
+
+
 def plot_roc(runs: list[dict], out: Path) -> None:
-    fig, axes = plt.subplots(1, 2, figsize=(10, 4.6))
-    for ax, src in zip(axes, ("kermany", "rsna"), strict=True):
+    srcs = _sources_present(runs)
+    fig, axes = plt.subplots(1, len(srcs), figsize=(5.2 * len(srcs), 6.4), squeeze=False)
+    for ax, src in zip(axes[0], srcs, strict=True):
         for color, r in zip(SERIES, runs, strict=False):
             f = r["dir"] / f"preds_{src}_test.csv"
             if not f.exists():
@@ -187,9 +223,10 @@ def plot_roc(runs: list[dict], out: Path) -> None:
         ax.plot([0, 1], [0, 1], color=AXIS, lw=1, ls=":")
         ax.set(xlim=(0, 1), ylim=(0, 1.01), xlabel="False positive rate (1 − specificity)", ylabel="Sensitivity")
         ax.set_title(f"{SOURCE_NAMES[src]} test set", loc="left")
-        ax.legend(loc="lower right", fontsize=7.2)
+        ax.set_aspect("equal")
+        ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.15), fontsize=7.2)  # below: never covers curves
     fig.text(
-        0.01, -0.02, "Dashed lines: external evaluation (test hospital not seen in training).", color=MUTED, fontsize=8
+        0.01, 1.0, "Dashed lines: external evaluation (test hospital not seen in training).", color=MUTED, fontsize=8
     )
     fig.tight_layout()
     fig.savefig(out, dpi=150, bbox_inches="tight")
@@ -197,45 +234,35 @@ def plot_roc(runs: list[dict], out: Path) -> None:
 
 
 def plot_domain_shift(runs: list[dict], out: Path) -> None:
-    """Dumbbell: AUROC on each test set, one row per model."""
-    rows = [r for r in runs if {"kermany", "rsna"} <= set(r["eval"])]
-    fig, ax = plt.subplots(figsize=(8.5, 0.55 * len(rows) + 1.4))
+    """Dot plot: AUROC on each test set, one row per model (hollow = external test set)."""
+    srcs = _sources_present(runs)
+    colors = dict(zip(SOURCES, SERIES, strict=False))
+    rows = [r for r in runs if set(srcs) <= set(r["eval"])]
+    fig, ax = plt.subplots(figsize=(8.5, 0.6 * len(rows) + 1.4))
     for y, r in enumerate(rows):
-        k, s = r["eval"]["kermany"]["auroc"], r["eval"]["rsna"]["auroc"]
-        ax.plot([k, s], [y, y], color=AXIS, lw=2, zorder=1)
-        close = abs(k - s) < 0.02  # push the two labels apart when the dots nearly touch
-        for value, other, color, src in ((k, s, SERIES[0], "kermany"), (s, k, SERIES[1], "rsna")):
+        points = sorted((r["eval"][s]["auroc"], s) for s in srcs)
+        ax.plot([points[0][0], points[-1][0]], [y, y], color=AXIS, lw=2, zorder=1)
+        last_above = None
+        for value, src in points:
+            color = colors[src]
             external = not r["eval"][src]["in_distribution"]
-            ax.scatter(
-                [value],
-                [y],
-                s=70,
-                facecolor=SURFACE if external else color,
-                edgecolor=color,
-                linewidth=2,
-                zorder=2,
-            )
-            left = close and value < other
-            ax.annotate(
-                f"{value:.3f}",
-                (value, y),
-                xytext=((-5 if left else 5) if close else 0, 9),
-                textcoords="offset points",
-                ha=("right" if left else "left") if close else "center",
-                fontsize=7.5,
-                color=INK_2,
-            )
+            ax.scatter([value], [y], s=70, facecolor=SURFACE if external else color, edgecolor=color,
+                       linewidth=2, zorder=2)  # fmt: skip
+            # Labels go above the dot unless the previous label above is too close; then below.
+            above = last_above is None or value - last_above >= 0.025
+            if above:
+                last_above = value
+            ax.annotate(f"{value:.3f}", (value, y), xytext=(0, 9 if above else -12), textcoords="offset points",
+                        ha="center", fontsize=7.5, color=INK_2)  # fmt: skip
     handles = [
-        plt.Line2D([], [], ls="", marker="o", ms=8, color=SERIES[0], label="Kermany test (pediatric)"),
-        plt.Line2D([], [], ls="", marker="o", ms=8, color=SERIES[1], label="RSNA test (adult)"),
-        plt.Line2D([], [], ls="", marker="o", ms=8, mfc=SURFACE, mec=MUTED, mew=2, label="external (not in training)"),
-    ]
+        plt.Line2D([], [], ls="", marker="o", ms=8, color=colors[s], label=f"{SOURCE_NAMES[s]} test") for s in srcs
+    ] + [plt.Line2D([], [], ls="", marker="o", ms=8, mfc=SURFACE, mec=MUTED, mew=2, label="external (not in training)")]
     ax.set_yticks(range(len(rows)), [r["label"] for r in rows], fontsize=8.5, color=INK_2)
     ax.set_ylim(len(rows) - 0.4, -0.7)
     ax.set_xlabel("AUROC")
     ax.grid(axis="y", visible=False)
     ax.set_title("AUROC on each hospital's test set", loc="left")
-    ax.legend(handles=handles, loc="lower center", bbox_to_anchor=(0.5, 1.06), ncol=3)
+    ax.legend(handles=handles, loc="lower center", bbox_to_anchor=(0.5, 1.06), ncol=2)
     fig.tight_layout()
     fig.savefig(out, dpi=150, bbox_inches="tight")
     plt.close(fig)
@@ -338,8 +365,18 @@ def build_report(runs_dir: Path = RUNS, out_dir: Path = REPORTS, featured: str |
         "\n## Grad-CAM localisation vs radiologist boxes (RSNA test, all Lung Opacity images)\n",
         localisation_table(runs),
     ]
-    if "rsna" in feat["eval"] and "subgroups" in feat["eval"]["rsna"]:
-        sections += [f"\n## Subgroups – {feat['label']}\n", subgroup_table(feat)]
+    if any("vindr_pcxr" in r["eval"] for r in runs):
+        sections += [
+            "\n## Third hospital: VinDr-PCXR (pediatric, Vietnam)\n",
+            "Positive = Pneumonia, Broncho-pneumonia or Pleuro-pneumonia; negative = everything else, including "
+            "bronchitis and bronchiolitis. † external: the model never saw this hospital and uses the global "
+            "threshold from its own validation data; models trained on VinDr-PCXR use their VinDr-PCXR validation "
+            "threshold. Children aged 5–9 are left out of the age columns (fewer than 10 pneumonia cases).\n",
+            third_site_table(runs),
+        ]
+    for src in ("rsna", "vindr_pcxr"):
+        if src in feat["eval"] and "subgroups" in feat["eval"][src]:
+            sections += [f"\n## Subgroups – {feat['label']}\n", subgroup_table(feat, src)]
     md = out_dir / "results.md"
     md.write_text("\n".join(sections) + "\n", encoding="utf-8")
 

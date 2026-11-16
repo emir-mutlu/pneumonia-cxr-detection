@@ -1,0 +1,12 @@
+# Three hospitals: Kermany (Guangzhou children), RSNA (US adults), VinDr-PCXR (Vietnamese children).
+# VinDr-PCXR needs your own PhysioNet access (see docs/DATASETS.md). Same recipe as
+# multi_convnext_tiny; each site also gets its own validation threshold.
+name: multi3_convnext_tiny
+arch: convnext_tiny.fb_in22k_ft_in1k
+sources: [kermany, rsna, vindr_pcxr]
+epochs: 10
+batch_size: 32
+lr: 1.0e-4
+weight_decay: 0.05
+patience: 3
+drop_path_rate: 0.1

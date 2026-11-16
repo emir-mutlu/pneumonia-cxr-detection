@@ -10,7 +10,7 @@ from pathlib import Path
 import numpy as np
 from PIL import Image, UnidentifiedImageError
 
-from .data.imaging import preprocess_for_model, to_uint8_gray
+from .data.imaging import dicom_to_gray, preprocess_for_model, to_uint8_gray
 
 DISCLAIMER = "Research prototype - not a medical device and not for clinical decisions."
 
@@ -26,9 +26,7 @@ def decode_image(data: bytes, filename: str = "") -> Image.Image:
         except ImportError as e:  # pragma: no cover
             raise ValueError("DICOM support needs pydicom (pip install pydicom)") from e
         try:
-            ds = pydicom.dcmread(io.BytesIO(data))
-            invert = getattr(ds, "PhotometricInterpretation", "") == "MONOCHROME1"
-            return to_uint8_gray(ds.pixel_array, invert=invert)
+            return dicom_to_gray(pydicom.dcmread(io.BytesIO(data)))
         except Exception as e:
             raise ValueError(f"Could not read the DICOM file: {e}") from e
     try:

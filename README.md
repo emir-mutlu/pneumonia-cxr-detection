@@ -15,6 +15,15 @@
 * **External validation exposes domain shift**: models trained on children alone drop to AUROC
   0.77–0.84 on adults and their specificity collapses to 0.20–0.46. Multi-source training fixes it
   without losing pediatric performance.
+* **A third hospital keeps it honest**: on 1,397 children from Vietnam (VinDr-PCXR, never used for
+  training or tuning) the released model drops to AUROC **0.746**, and its threshold catches only
+  7 % of pneumonia cases. Models trained on Chinese children transfer *worse* to Vietnamese
+  children (0.59–0.66) than models trained on US adults (0.71–0.73). A new site needs its own
+  data and operating point.
+* **Local data and a per-site threshold close most of that gap**: adding VinDr-PCXR's training
+  split raises the Vietnam AUROC to **0.833** and sensitivity from 7 % to **74 %**, keeps 0.990 /
+  0.886 on the other two hospitals and cuts calibration error to about a third. The cost: Grad-CAM
+  localisation drops from 77 % to 69 %.
 * **Explainability measured, not just shown**: Grad-CAM peaks land inside radiologist boxes in
   **77 %** of cases (random point: 12 %). The 2020-style CNN reaches 90 % accuracy but scores
   **8 %**, worse than random. It was right for the wrong reasons.
@@ -82,11 +91,11 @@ and fixes each of those weaknesses:
 
 | Common shortcut | What this project does instead |
 |---|---|
-| One dataset, one hospital | **Two independent sources**: 5,856 pediatric X-rays (Guangzhou, China) and 29,684 adult X-rays (NIH, USA) |
+| One dataset, one hospital | **Two independent training sources**: 5,856 pediatric X-rays (Guangzhou, China) and 29,684 adult X-rays (NIH, USA), plus a **third hospital used only for testing**: 1,397 pediatric X-rays (Vietnam) |
 | Split by image | **Patient-level splits.** Found that RSNA's 29,684 images belong to only **12,233 patients** (75 % of images come from patients with several scans), by joining RSNA's NIH mapping file |
 | 16-image validation set, threshold tuned on test | Patient-level 85/15 re-split for validation; **threshold and calibration chosen on validation only** |
 | Accuracy only | AUROC, AUPRC, sensitivity, specificity, PPV/NPV, F1 with **patient-clustered bootstrap 95 % CIs** |
-| In-distribution test only | **External validation** on the other hospital and age group, **subgroup analysis** by sex, age and view |
+| In-distribution test only | **External validation** on the other hospital and age group and on a third, unseen hospital; **subgroup analysis** by sex, age and view |
 | Over-confident probabilities | **Temperature scaling**, ECE and reliability diagrams |
 | Hand-picked heatmaps | **Grad-CAM scored against radiologist boxes** (pointing game, energy-in-box vs. random baselines) |
 | Notebook | Installable package, CLI, YAML configs, tests, CI, **ONNX export, FastAPI + Docker (torch-free), clinical web viewer** |
@@ -102,28 +111,32 @@ calibration or threshold choice. Full tables: [reports/results.md](reports/resul
 |---|---:|---|---:|---:|---:|---:|
 | Kermany (pediatric) | 624 (427) | **0.990** (0.982–0.995) | 0.995 | 0.838 | 93.6 % | 0.068 |
 | RSNA (adult) | 6,133 (2,446) | **0.890** (0.877–0.903) | 0.691 | 0.878 | 83.1 % | 0.068 |
+| VinDr-PCXR (pediatric, Vietnam) † | 1,397 (n/a) | 0.746 (0.702–0.789) | 0.071 | 0.993 | 88.0 % | 0.083 |
 
-One decision threshold (0.576, chosen on validation data) is used for both populations. RSNA is
+One decision threshold (0.576, chosen on validation data) is used for all populations. RSNA is
 harder by construction: 59 % of its negatives are *abnormal X-rays without pneumonia*. Against
-strictly normal adult X-rays the AUROC is 0.984.
+strictly normal adult X-rays the AUROC is 0.984. † VinDr-PCXR is a third hospital that no model
+saw in training; its 88 % accuracy only reflects that 88 % of its children have no pneumonia.
 
 ### 1. Domain shift: trained on one hospital, tested on another
 
 ![AUROC on each test set per model](reports/figures/domain_shift.png)
 
-| Model | Pre-training | Train data | Params | Kermany test AUROC | RSNA test AUROC | Grad-CAM pointing game |
-|---|---|---|---:|---|---|---:|
-| Simple CNN (2020 baseline) | none | Kermany | 1.2 M | 0.976 (0.963–0.986) | 0.767 (0.748–0.784) † | 0.08 |
-| ResNet-50 | ImageNet-1k | Kermany | 23.5 M | 0.991 (0.984–0.996) | 0.820 (0.803–0.835) † | 0.44 |
-| DenseNet-121 | chest X-rays (CheXpert) | Kermany | 6.9 M | 0.985 (0.975–0.992) | 0.805 (0.790–0.819) † | 0.48 |
-| ConvNeXt-Tiny | ImageNet-22k | Kermany | 27.8 M | **0.992** (0.985–0.997) | 0.842 (0.826–0.858) † | 0.58 |
-| DenseNet-121 | chest X-rays (CheXpert) | RSNA | 6.9 M | 0.916 (0.890–0.938) † | 0.868 (0.853–0.883) | 0.38 |
-| ConvNeXt-Tiny | ImageNet-22k | RSNA | 27.8 M | 0.884 (0.851–0.911) † | **0.890** (0.877–0.903) | 0.67 |
-| DenseNet-121 | chest X-rays (CheXpert) | Kermany + RSNA | 6.9 M | 0.979 (0.966–0.989) | 0.868 (0.853–0.883) | 0.40 |
-| **ConvNeXt-Tiny** | ImageNet-22k | **Kermany + RSNA** | 27.8 M | 0.990 (0.982–0.995) | **0.890** (0.877–0.903) | **0.76** |
+| Model | Pre-training | Train data | Params | Kermany test AUROC | RSNA test AUROC | VinDr-PCXR test AUROC | Grad-CAM pointing game |
+|---|---|---|---:|---|---|---|---:|
+| Simple CNN (2020 baseline) | none | Kermany | 1.2 M | 0.976 (0.963–0.986) | 0.767 (0.748–0.784) † | 0.634 (0.592–0.673) † | 0.08 |
+| ResNet-50 | ImageNet-1k | Kermany | 23.5 M | 0.991 (0.984–0.996) | 0.820 (0.803–0.835) † | 0.603 (0.554–0.647) † | 0.44 |
+| DenseNet-121 | chest X-rays (CheXpert) | Kermany | 6.9 M | 0.985 (0.975–0.992) | 0.805 (0.790–0.819) † | 0.593 (0.543–0.640) † | 0.48 |
+| ConvNeXt-Tiny | ImageNet-22k | Kermany | 27.8 M | **0.992** (0.985–0.997) | 0.842 (0.826–0.858) † | 0.662 (0.615–0.705) † | 0.58 |
+| DenseNet-121 | chest X-rays (CheXpert) | RSNA | 6.9 M | 0.916 (0.890–0.938) † | 0.868 (0.853–0.883) | 0.708 (0.670–0.743) † | 0.38 |
+| ConvNeXt-Tiny | ImageNet-22k | RSNA | 27.8 M | 0.884 (0.851–0.911) † | **0.890** (0.877–0.903) | 0.726 (0.687–0.767) † | 0.67 |
+| DenseNet-121 | chest X-rays (CheXpert) | Kermany + RSNA | 6.9 M | 0.979 (0.966–0.989) | 0.868 (0.853–0.883) | 0.658 (0.614–0.699) † | 0.40 |
+| **ConvNeXt-Tiny** | ImageNet-22k | **Kermany + RSNA** | 27.8 M | 0.990 (0.982–0.995) | **0.890** (0.877–0.903) | **0.746** (0.702–0.789) † | **0.76** |
+| ConvNeXt-Tiny | ImageNet-22k | Kermany + RSNA + VinDr-PCXR | 27.8 M | 0.990 (0.982–0.995) | 0.886 (0.873–0.899) | **0.833** (0.802–0.863) | 0.69 |
 
-† external: that hospital and age group were never seen in training. Pointing game: share of RSNA
-test pneumonia images whose Grad-CAM peak falls inside a radiologist box; a random point scores 0.12.
+† external: that hospital and age group were never seen in training. VinDr-PCXR (Vietnam,
+children under 10) is external for every model. Pointing game: share of RSNA test pneumonia
+images whose Grad-CAM peak falls inside a radiologist box; a random point scores 0.12.
 
 * **Every single-hospital model looks excellent at home and degrades abroad.** Kermany-only models
   lose 0.15–0.21 AUROC on adults. At the threshold tuned on pediatric validation data they flag
@@ -138,6 +151,37 @@ test pneumonia images whose Grad-CAM peak falls inside a radiologist box; a rand
 * **Chest X-ray pre-training did not beat a strong ImageNet-22k ConvNet** here: DenseNet-121 with
   CheXpert weights is 4× smaller but trails ConvNeXt-T by 0.01–0.04 AUROC in five of six
   comparisons; the exception is adult → child transfer (0.916 vs 0.884).
+* **A third hospital lowers every model.** On VinDr-PCXR (Phu Tho, Vietnam; 1,397 children,
+  median age 1 year; pneumonia includes broncho-pneumonia, and bronchitis or bronchiolitis
+  count as negatives) all eight models score 0.59–0.75:
+  * **Same age group is not enough.** Models trained on Kermany children score 0.59–0.66, below
+    the adult-only models (0.71–0.73). They learned Guangzhou-specific cues, not "pediatric
+    pneumonia".
+  * **The released model still ranks best (0.746), but its threshold does not transfer.** Its
+    calibrated probabilities are low for these children (median 0.034 for pneumonia cases), so
+    at 0.576 it finds 7 % of them. Catching 80 % would need a threshold of 0.012, at a
+    specificity of 0.50.
+  * **The youngest children are hardest**: AUROC 0.681 under one year vs 0.774 at 1–4 years
+    (Kermany covers ages 1–5). Full table: [reports/results.md](reports/results.md).
+* **What a hospital would do next, simulated: train on its own data and set its own threshold.**
+  The same recipe on all three sources (VinDr-PCXR's official training split added, 15 % of it
+  held out for validation), with a Youden threshold per site:
+
+  | Test set | Released model (2 sites) | 3-site model | Sens / Spec, released → 3-site |
+  |---|---|---|---|
+  | Kermany | 0.990 | 0.990 | 0.995 / 0.838 → 0.992 / 0.885 |
+  | RSNA | 0.890 | 0.886 | 0.691 / 0.878 → 0.845 / 0.755 |
+  | VinDr-PCXR | 0.746 † | **0.833** | 0.071 / 0.993 → **0.735 / 0.759** |
+
+  * Infants under one year improve most (0.681 → 0.796), and calibration error falls from
+    0.068–0.083 to 0.021–0.030.
+  * Grad-CAM localisation on RSNA drops from 0.765 to 0.690 (random: 0.124); the model spends
+    capacity on a third label definition.
+  * The VinDr-PCXR result is now in-distribution, not external. The dataset has no patient ids,
+    so the same child could appear in its official training and test splits.
+  * The released model stays the 2-site one, trained on public data only. The PhysioNet
+    license is silent on sharing models trained on its restricted data, so these weights are
+    not published.
 
 ### 2. Explainability, evaluated against radiologists
 
@@ -163,7 +207,8 @@ why it collapses on another hospital.
 * **Calibration fails completely across hospitals**: a probability from a Kermany-only model means
   much less on an adult X-ray (ECE 0.40–0.53).
 * **The same holds for the decision threshold.** One global threshold gives sensitivity 0.995 in
-  children but 0.691 in adults, so any new site needs its own validation and operating point.
+  Guangzhou children, 0.691 in US adults and 0.071 in Vietnamese children, so any new site needs
+  its own validation and operating point.
 
 ### 4. Subgroups (RSNA test set, released model)
 
@@ -194,17 +239,17 @@ why it collapses on another hospital.
 
 ## Data
 
-| | Kermany et al. (Guangzhou) | RSNA Pneumonia Challenge 2018 (NIH) |
-|---|---|---|
-| Population | children aged 1–5 | adults (median age 49) |
-| Images / patients | 5,856 / 3,288 | 29,684 / 12,233 |
-| Positive class | pneumonia (73 %) | lung opacity (24 %) |
-| Extra | bacterial / viral subtype | radiologist boxes, sex, age, PA/AP view |
-| License | CC BY 4.0 | RSNA terms of use (attribution) |
+| | Kermany et al. (Guangzhou) | RSNA Pneumonia Challenge 2018 (NIH) | VinDr-PCXR (Vietnam), test only |
+|---|---|---|---|
+| Population | children aged 1–5 | adults (median age 49) | children under 10 (median 1 year) |
+| Images / patients | 5,856 / 3,288 | 29,684 / 12,233 | 9,125 / no patient ids (test: 1,397) |
+| Positive class | pneumonia (73 %) | lung opacity (24 %) | pneumonia incl. broncho-pneumonia (12 %) |
+| Extra | bacterial / viral subtype | radiologist boxes, sex, age, PA/AP view | sex, age, 11 other diagnoses |
+| License | CC BY 4.0 | RSNA terms of use (attribution) | PhysioNet Restricted Health Data License 1.5.0 (sign the DUA; never redistributed) |
 
 Patient-level, label-stratified splits: Kermany official test set kept, train/val re-split 85/15;
-RSNA 70/10/20. Details, split tables, data-quality findings and required citations:
-[docs/DATASETS.md](docs/DATASETS.md).
+RSNA 70/10/20; VinDr-PCXR official test set. Details, split tables, data-quality findings and
+required citations: [docs/DATASETS.md](docs/DATASETS.md).
 
 ## Method
 
@@ -275,6 +320,19 @@ pneumo export   runs/multi_convnext_tiny
 `scripts/reproduce.sh` runs all eight configurations in `configs/` (≈2.5 h). Add `--mlflow` to `pneumo train`
 to track runs with MLflow (`pip install -e ".[track]"`).
 
+**Third-hospital test (optional, needs your own PhysioNet access)**: sign the data use agreement
+on [VinDr-PCXR](https://physionet.org/content/vindr-pcxr/), download the ZIP from its Files
+section, then:
+
+```bash
+pneumo physionet-import vindr-pcxr-...-1.0.0.zip --project vindr-pcxr   # extract + verify SHA-256
+pneumo prepare vindr_pcxr
+pneumo evaluate runs/* --source vindr_pcxr
+pneumo train configs/multi3_convnext_tiny.yaml   # optional: the 3-site model (≈20 min)
+```
+
+Without it, every command simply skips this test set.
+
 ## Project structure
 
 ```
@@ -289,7 +347,7 @@ to track runs with MLflow (`pip install -e ".[track]"`).
 ├── models/                  released model: model.onnx, model.pt, model_meta.json
 ├── reports/                 generated results.md, results.json and figures
 ├── src/pneumonia_cxr/
-│   ├── data/                download, Kermany / RSNA preparation, patient splits, datasets
+│   ├── data/                download, PhysioNet import, Kermany / RSNA / VinDr-PCXR preparation, splits
 │   ├── models.py            model zoo with built-in input normalisation
 │   ├── train.py             training loop, calibration, threshold selection
 │   ├── evaluate.py          test metrics, bootstrap CIs, subgroups
@@ -308,8 +366,12 @@ to track runs with MLflow (`pip install -e ".[track]"`).
 
 ## Limitations
 
-* Two sources are still a narrow view of real-world variation (scanners, protocols,
-  populations). Results on a third hospital may differ.
+* Two training sources are a narrow view of real-world variation (scanners, protocols,
+  populations). The third-hospital test shows the cost: AUROC 0.746 and a threshold that does
+  not transfer. Local training data and a per-site threshold recover much of it (0.833), which is
+  the argument for validating and tuning at every new site.
+* VinDr-PCXR has no patient identifiers, so its CIs are image-level, and each image was read by
+  one radiologist.
 * Kermany labels are image-level diagnoses from two physicians; RSNA labels mark *lung opacity
   suggestive of pneumonia*, not confirmed pneumonia. The two label definitions differ.
 * AP views and portable markers correlate with disease in RSNA; the model may partly use such
@@ -321,8 +383,8 @@ to track runs with MLflow (`pip install -e ".[track]"`).
 
 Kermany et al., Cell 2018 and Mendeley Data V2 (CC BY 4.0); NIH Clinical Center ChestX-ray14
 (Wang et al., CVPR 2017); RSNA-STR Pneumonia Detection Challenge annotations (Shih et al.,
-Radiology: AI 2019); TorchXRayVision (Cohen et al., MIDL 2022). Full references in
-[docs/DATASETS.md](docs/DATASETS.md).
+Radiology: AI 2019); VinDr-PCXR (Pham, Tran & Nguyen, PhysioNet 2022) and PhysioNet;
+TorchXRayVision (Cohen et al., MIDL 2022). Full references in [docs/DATASETS.md](docs/DATASETS.md).
 
 ## License
 
