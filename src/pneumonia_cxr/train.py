@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 import torch
 from torch import nn
-from torch.utils.data import ConcatDataset, DataLoader
+from torch.utils.data import ConcatDataset, DataLoader, WeightedRandomSampler
 from tqdm import tqdm
 
 from .config import TrainConfig
@@ -30,15 +30,24 @@ def seed_everything(seed: int) -> None:
     torch.cuda.manual_seed_all(seed)
 
 
-def _loader(ds, batch_size: int, shuffle: bool, num_workers: int) -> DataLoader:
+def _loader(ds, batch_size: int, shuffle: bool, num_workers: int, sampler=None) -> DataLoader:
     return DataLoader(
         ds,
         batch_size=batch_size,
-        shuffle=shuffle,
+        shuffle=shuffle and sampler is None,
+        sampler=sampler,
         num_workers=num_workers,
         pin_memory=torch.cuda.is_available(),
         persistent_workers=num_workers > 0,
         drop_last=shuffle,
+    )
+
+
+def balanced_sampler(sizes: list[int], seed: int) -> WeightedRandomSampler:
+    """Every source is drawn equally often; an epoch still has sum(sizes) draws."""
+    weights = torch.cat([torch.full((n,), 1.0 / (len(sizes) * n), dtype=torch.double) for n in sizes])
+    return WeightedRandomSampler(
+        weights, num_samples=int(sum(sizes)), replacement=True, generator=torch.Generator().manual_seed(seed)
     )
 
 
@@ -80,7 +89,7 @@ def train(cfg: TrainConfig, runs_dir: Path = RUNS, processed_dir: Path = DATA_PR
     (run_dir / "config.json").write_text(json.dumps(cfg.to_dict(), indent=2))
 
     train_sets = [
-        make_dataset(s, "train", True, cfg.img_size, processed_dir, cfg.max_train_samples, cfg.seed)
+        make_dataset(s, "train", True, cfg.img_size, processed_dir, cfg.max_train_samples, cfg.seed, cfg.augment)
         for s in cfg.sources
     ]
     val_sets: dict[str, CXRDataset] = {
@@ -91,7 +100,10 @@ def train(cfg: TrainConfig, runs_dir: Path = RUNS, processed_dir: Path = DATA_PR
         for s in cfg.sources
     }  # fmt: skip
     train_ds = ConcatDataset(train_sets)
-    train_loader = _loader(train_ds, cfg.batch_size, True, cfg.num_workers)
+    sampler = None
+    if cfg.balance_sources and len(train_sets) > 1:
+        sampler = balanced_sampler([len(ds) for ds in train_sets], cfg.seed)
+    train_loader = _loader(train_ds, cfg.batch_size, True, cfg.num_workers, sampler)
     val_workers = min(2, cfg.num_workers)  # eval transforms are cheap; fewer spawned processes
     val_loaders = {s: _loader(ds, cfg.batch_size * 2, False, val_workers) for s, ds in val_sets.items()}
 

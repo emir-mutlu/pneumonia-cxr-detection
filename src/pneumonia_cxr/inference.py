@@ -53,8 +53,15 @@ class Prediction:
 
 
 class OnnxPredictor:
-    def __init__(self, model_dir: str | Path, providers: list[str] | None = None):
+    """ONNX Runtime predictor. With ``site_profile`` (from ``pneumo calibrate``) the probability is
+    recalibrated for that hospital and its local threshold replaces the released one."""
+
+    def __init__(
+        self, model_dir: str | Path, providers: list[str] | None = None, site_profile: str | Path | None = None
+    ):
         import onnxruntime as ort
+
+        from .site_calibration import SiteProfile
 
         model_dir = Path(model_dir)
         self.meta = json.loads((model_dir / "model_meta.json").read_text())
@@ -63,11 +70,18 @@ class OnnxPredictor:
         )
         self.img_size = int(self.meta["img_size"])
         self.cache_size = int(self.meta.get("cache_size", 256))
-        self.threshold = float(self.meta["threshold"])
+        self.model_threshold = float(self.meta["threshold"])
+        self.site = SiteProfile.load(site_profile) if site_profile else None
+        self.threshold = self.site.threshold if self.site else self.model_threshold
 
-    def predict_proba(self, images: list[Image.Image | np.ndarray]) -> np.ndarray:
+    def predict_raw(self, images: list[Image.Image | np.ndarray]) -> np.ndarray:
+        """Released-model probabilities (temperature-scaled, no site profile)."""
         batch = np.concatenate([preprocess_for_model(im, self.img_size, self.cache_size) for im in images])
         return self.session.run(None, {"image": batch})[0].astype(float)
+
+    def predict_proba(self, images: list[Image.Image | np.ndarray]) -> np.ndarray:
+        p = self.predict_raw(images)
+        return self.site.apply(p) if self.site else p
 
     def predict(self, image: Image.Image | np.ndarray) -> Prediction:
         p = float(self.predict_proba([image])[0])

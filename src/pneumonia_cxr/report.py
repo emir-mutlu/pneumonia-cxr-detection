@@ -14,7 +14,7 @@ import pandas as pd
 from sklearn.metrics import confusion_matrix, roc_curve
 
 from .metrics import sigmoid
-from .paths import REPORTS, RUNS, SOURCES
+from .paths import PUBLIC_SOURCES, REPORTS, RUNS, SOURCES
 
 # Validated categorical palette (fixed order) and recessive chart chrome, light surface.
 SERIES = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948"]
@@ -70,7 +70,8 @@ SHORT_SOURCE = {"kermany": "Kermany", "rsna": "RSNA", "vindr_pcxr": "VinDr-PCXR"
 def model_label(cfg: dict) -> str:
     arch = ARCH_NAMES.get(cfg["arch"], cfg["arch"])
     sources = "+".join(SHORT_SOURCE.get(s, s) for s in cfg["sources"])
-    return f"{arch} · trained on {sources}"
+    suffix = " · strong aug, balanced" if recipe(cfg) == "generalisation" else ""
+    return f"{arch} · trained on {sources}{suffix}"
 
 
 def collect_runs(runs_dir: Path = RUNS) -> list[dict]:
@@ -97,13 +98,24 @@ def collect_runs(runs_dir: Path = RUNS) -> list[dict]:
     return sorted(runs, key=_run_order)
 
 
-def _run_order(run: dict) -> tuple[int, int, str]:
-    """Single-source runs first (Kermany, then RSNA), then two-, then three-source; within, by architecture."""
+def _run_order(run: dict) -> tuple:
+    """Single-source runs first (Kermany, then RSNA), then two-, then three-source; within, by
+    architecture, source combination and recipe (released before generalisation)."""
     sources = run["config"]["sources"]
     group = len(sources) if len(sources) > 1 else (0 if sources == ["kermany"] else 1)
     archs = list(ARCH_NAMES)
     arch = archs.index(run["config"]["arch"]) if run["config"]["arch"] in archs else len(archs)
-    return group, arch, run["name"]
+    combo = tuple(SOURCES.index(s) if s in SOURCES else len(SOURCES) for s in sources)
+    return group, arch, combo, recipe(run["config"]) != "released", run["name"]
+
+
+def train_desc(cfg: dict) -> str:
+    desc = " + ".join(cfg["sources"])
+    return desc + (" (strong aug, balanced)" if recipe(cfg) == "generalisation" else "")
+
+
+def _site_mark(m: dict) -> str:
+    return " ‡" if m.get("threshold_kind") == "site" else ""
 
 
 def _fmt_ci(m: dict, key: str) -> str:
@@ -117,7 +129,7 @@ def results_table(runs: list[dict]) -> str:
         "|---|---|---:|---|---|---|---|",
     ]
     for r in runs:
-        cells = [ARCH_NAMES.get(r["config"]["arch"], r["config"]["arch"]), " + ".join(r["config"]["sources"]),
+        cells = [ARCH_NAMES.get(r["config"]["arch"], r["config"]["arch"]), train_desc(r["config"]),
                  f"{r['summary']['n_params'] / 1e6:.1f}M"]  # fmt: skip
         for src in ("kermany", "rsna"):
             m = r["eval"].get(src)
@@ -125,12 +137,13 @@ def results_table(runs: list[dict]) -> str:
                 cells += ["–", "–"]
                 continue
             star = "" if m["in_distribution"] else " †"
-            cells += [_fmt_ci(m, "auroc") + star, f"{m['sensitivity']:.3f} / {m['specificity']:.3f}"]
+            cells += [_fmt_ci(m, "auroc") + star, f"{m['sensitivity']:.3f} / {m['specificity']:.3f}{_site_mark(m)}"]
         lines.append("| " + " | ".join(cells) + " |")
     lines.append("")
     lines.append(
         "† external test set: hospital / population never seen in training; threshold transferred from the training data's validation split. "
-        "The three-hospital run uses each training site's own validation threshold on that site's test set."
+        "‡ operating point = that hospital's own validation threshold (runs that store per-site thresholds); "
+        "otherwise the run's single global threshold."
     )
     return "\n".join(lines)
 
@@ -150,10 +163,50 @@ def third_site_table(runs: list[dict], src: str = "vindr_pcxr") -> str:
         strict = sub.get("pneumonia_vs_no_finding_only")
         star = "" if m["in_distribution"] else " †"
         lines.append(
-            f"| {ARCH_NAMES.get(r['config']['arch'], r['config']['arch'])} | {' + '.join(r['config']['sources'])} | "
-            f"{_fmt_ci(m, 'auroc')}{star} | {m['sensitivity']:.3f} / {m['specificity']:.3f} | "
+            f"| {ARCH_NAMES.get(r['config']['arch'], r['config']['arch'])} | {train_desc(r['config'])} | "
+            f"{_fmt_ci(m, 'auroc')}{star} | {m['sensitivity']:.3f} / {m['specificity']:.3f}{_site_mark(m)} | "
             f"{strict['auroc'] if strict else float('nan'):.3f} | {ages} |"
         )
+    return "\n".join(lines)
+
+
+def recipe(cfg: dict) -> str:
+    """'released' = mild augmentation, size-proportional sampling; 'generalisation' = strong + balanced."""
+    strong = cfg.get("augment", "standard") == "strong" and cfg.get("balance_sources", False)
+    return "generalisation" if strong else "released"
+
+
+def loso_table(runs: list[dict]) -> str:
+    """Leave-one-hospital-out: each ConvNeXt trained on two of the three sites, tested on the third."""
+    folds: dict[str, dict[str, dict]] = {}
+    for r in runs:
+        cfg = r["config"]
+        held = [s for s in SOURCES if s not in cfg["sources"]]
+        if (
+            len(cfg["sources"]) != 2
+            or len(held) != 1
+            or not cfg["arch"].startswith("convnext")
+            or held[0] not in r["eval"]
+        ):
+            continue
+        folds.setdefault(held[0], {})[recipe(cfg)] = r["eval"][held[0]]
+    folds = {k: v for k, v in folds.items() if {"released", "generalisation"} <= set(v)}
+    if not folds:
+        return ""
+    lines = [
+        "| Unseen hospital | Released recipe AUROC (95% CI) | Generalisation recipe AUROC (95% CI) | Δ AUROC |",
+        "|---|---|---|---:|",
+    ]
+    deltas = []
+    for src in SOURCES:
+        if src not in folds:
+            continue
+        a, b = folds[src]["released"], folds[src]["generalisation"]
+        deltas.append(b["auroc"] - a["auroc"])
+        lines.append(f"| {SOURCE_NAMES[src]} | {_fmt_ci(a, 'auroc')} | {_fmt_ci(b, 'auroc')} | {deltas[-1]:+.3f} |")
+    mean_a = np.mean([folds[s]["released"]["auroc"] for s in folds])
+    mean_b = np.mean([folds[s]["generalisation"]["auroc"] for s in folds])
+    lines.append(f"| **Mean** | {mean_a:.3f} | {mean_b:.3f} | {np.mean(deltas):+.3f} |")
     return "\n".join(lines)
 
 
@@ -166,7 +219,7 @@ def calibration_table(runs: list[dict]) -> str:
         for src, m in r["eval"].items():
             if m["in_distribution"]:
                 lines.append(
-                    f"| {ARCH_NAMES.get(r['config']['arch'], r['config']['arch'])} | {' + '.join(r['config']['sources'])} | "
+                    f"| {ARCH_NAMES.get(r['config']['arch'], r['config']['arch'])} | {train_desc(r['config'])} | "
                     f"{src} | {m['ece_uncalibrated']:.3f} | {m['ece']:.3f} | {m['brier']:.3f} |"
                 )
     return "\n".join(lines)
@@ -183,7 +236,7 @@ def localisation_table(runs: list[dict]) -> str:
             continue
         a = loc["all_positives"]
         lines.append(
-            f"| {ARCH_NAMES.get(r['config']['arch'], r['config']['arch'])} | {' + '.join(r['config']['sources'])} | "
+            f"| {ARCH_NAMES.get(r['config']['arch'], r['config']['arch'])} | {train_desc(r['config'])} | "
             f"{a['pointing_game_hit_rate']:.3f} | {a['random_point_hit_rate']:.3f} | {a['energy_in_box']:.3f} | {a['uniform_map_energy_in_box']:.3f} |"
         )
     return "\n".join(lines)
@@ -348,8 +401,12 @@ def build_report(runs_dir: Path = RUNS, out_dir: Path = REPORTS, featured: str |
     fig_dir = out_dir / "figures"
     fig_dir.mkdir(parents=True, exist_ok=True)
 
-    plot_roc(runs, fig_dir / "roc_curves.png")
-    plot_domain_shift(runs, fig_dir / "domain_shift.png")
+    # Figures show the released recipe only (the recipe comparison has its own table); the ROC
+    # panels keep to the public-data runs so every curve gets one of the 8 categorical colours.
+    core = [r for r in runs if recipe(r["config"]) == "released"]
+    public_core = [r for r in core if set(r["config"]["sources"]) <= set(PUBLIC_SOURCES)]
+    plot_roc(public_core[: len(SERIES)], fig_dir / "roc_curves.png")
+    plot_domain_shift(core, fig_dir / "domain_shift.png")
     feat = next((r for r in runs if r["name"] == featured), runs[-1])
     plot_reliability(feat, fig_dir / "reliability.png")
     plot_confusion(feat, fig_dir / "confusion_matrices.png")
@@ -373,6 +430,15 @@ def build_report(runs_dir: Path = RUNS, out_dir: Path = REPORTS, featured: str |
             "threshold from its own validation data; models trained on VinDr-PCXR use their VinDr-PCXR validation "
             "threshold. Children aged 5–9 are left out of the age columns (fewer than 10 pneumonia cases).\n",
             third_site_table(runs),
+        ]
+    loso = loso_table(runs)
+    if loso:
+        sections += [
+            "\n## Leave one hospital out (ConvNeXt-T, trained on two hospitals, tested on the third)\n",
+            "Released recipe: mild augmentation, sources sampled in proportion to their size. Generalisation "
+            "recipe: strong exposure / gamma / blur / noise / equalisation / marker-erasing augmentation and "
+            "hospital-balanced sampling.\n",
+            loso,
         ]
     for src in ("rsna", "vindr_pcxr"):
         if src in feat["eval"] and "subgroups" in feat["eval"][src]:

@@ -69,7 +69,9 @@ Challenge 2018 (NIH Clinical Center, USA; adults). Patient-level splits; see
   0.681 for infants under one year.
 * **Threshold transfer**: a threshold tuned on one hospital can give very different sensitivity
   / specificity on another (see the external results in `reports/results.md`). Any new site
-  needs local validation and its own operating point.
+  needs local validation and its own operating point: `pneumo calibrate` measures the model on a
+  site's own labelled X-rays and writes a site profile (Platt recalibration + local threshold)
+  that `pneumo predict --site-profile` applies. It does not replace a clinical study.
 * **Label definitions differ** between sources (clinical pneumonia vs. radiographic lung
   opacity) and contain reader noise.
 * **Shortcut risk**: AP / portable acquisitions are more common in sick patients; subgroup

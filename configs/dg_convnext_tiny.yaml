@@ -1,0 +1,14 @@
+# Same data as the released model (Kermany + RSNA, public), trained for other hospitals:
+# hospital-balanced sampling and strong, site-agnostic augmentation. VinDr-PCXR, if prepared,
+# is the unseen-hospital check.
+name: dg_convnext_tiny
+arch: convnext_tiny.fb_in22k_ft_in1k
+sources: [kermany, rsna]
+epochs: 10
+batch_size: 32
+lr: 1.0e-4
+weight_decay: 0.05
+patience: 3
+drop_path_rate: 0.1
+augment: strong
+balance_sources: true

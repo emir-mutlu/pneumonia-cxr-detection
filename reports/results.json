@@ -2684,6 +2684,1796 @@
     }
   },
   {
+    "name": "dg_convnext_tiny",
+    "config": {
+      "name": "dg_convnext_tiny",
+      "arch": "convnext_tiny.fb_in22k_ft_in1k",
+      "pretrained": true,
+      "sources": [
+        "kermany",
+        "rsna"
+      ],
+      "img_size": 224,
+      "epochs": 10,
+      "batch_size": 32,
+      "lr": 0.0001,
+      "weight_decay": 0.05,
+      "warmup_epochs": 1.0,
+      "patience": 3,
+      "drop_path_rate": 0.1,
+      "num_workers": 4,
+      "seed": 42,
+      "amp": true,
+      "augment": "strong",
+      "balance_sources": true,
+      "max_train_samples": null,
+      "notes": ""
+    },
+    "label": "ConvNeXt-T (ImageNet-22k) \u00b7 trained on Kermany+RSNA \u00b7 strong aug, balanced",
+    "summary": {
+      "config": {
+        "name": "dg_convnext_tiny",
+        "arch": "convnext_tiny.fb_in22k_ft_in1k",
+        "pretrained": true,
+        "sources": [
+          "kermany",
+          "rsna"
+        ],
+        "img_size": 224,
+        "epochs": 10,
+        "batch_size": 32,
+        "lr": 0.0001,
+        "weight_decay": 0.05,
+        "warmup_epochs": 1.0,
+        "patience": 3,
+        "drop_path_rate": 0.1,
+        "num_workers": 4,
+        "seed": 42,
+        "amp": true,
+        "augment": "strong",
+        "balance_sources": true,
+        "max_train_samples": null,
+        "notes": ""
+      },
+      "temperature": 1.47737004134962,
+      "threshold": 0.39705267548561096,
+      "site_thresholds": {
+        "kermany": 0.6793773770332336,
+        "rsna": 0.2753342390060425
+      },
+      "best_epoch": 10,
+      "val_metrics": {
+        "n": 3855,
+        "prevalence": 0.340337224383917,
+        "auroc": 0.9348378619452731,
+        "auprc": 0.9047229195656534,
+        "accuracy": 0.8635538261997406,
+        "sensitivity": 0.8300304878048781,
+        "specificity": 0.8808493904836807,
+        "ppv": 0.7823275862068966,
+        "npv": 0.9094600081201787,
+        "f1": 0.8054733727810651,
+        "balanced_accuracy": 0.8554399391442794,
+        "brier": 0.09181703402344088,
+        "ece": 0.016092815345011877,
+        "threshold": 0.39705267548561096,
+        "tp": 1089,
+        "fp": 303,
+        "tn": 2240,
+        "fn": 223
+      },
+      "n_params": 27820897,
+      "train_seconds": 1029.9397337436676
+    },
+    "eval": {
+      "kermany": {
+        "n": 624,
+        "prevalence": 0.625,
+        "auroc": 0.9932884067499451,
+        "auprc": 0.9963529335071521,
+        "accuracy": 0.9727564102564102,
+        "sensitivity": 0.9794871794871794,
+        "specificity": 0.9615384615384616,
+        "ppv": 0.9769820971867008,
+        "npv": 0.9656652360515021,
+        "f1": 0.9782330345710627,
+        "balanced_accuracy": 0.9705128205128205,
+        "brier": 0.024708769449168992,
+        "ece": 0.019052766675789184,
+        "threshold": 0.6793773770332336,
+        "tp": 382,
+        "fp": 9,
+        "tn": 225,
+        "fn": 8,
+        "threshold_kind": "site",
+        "at_global_threshold": {
+          "threshold": 0.39705267548561096,
+          "sensitivity": 0.9846153846153847,
+          "specificity": 0.9444444444444444
+        },
+        "ece_uncalibrated": 0.02373762220932822,
+        "in_distribution": true,
+        "ci95": {
+          "auroc": [
+            0.9866494470038817,
+            0.9975794583992663
+          ],
+          "auprc": [
+            0.9927447945851144,
+            0.9986391851410694
+          ],
+          "sensitivity": [
+            0.9643661513736895,
+            0.9925200920964915
+          ],
+          "specificity": [
+            0.9360712328767123,
+            0.9827604706230575
+          ],
+          "accuracy": [
+            0.9582553986957766,
+            0.9851997871517028
+          ],
+          "f1": [
+            0.9657152780783826,
+            0.9882660669019335
+          ]
+        }
+      },
+      "rsna": {
+        "n": 6133,
+        "prevalence": 0.2524050220120659,
+        "auroc": 0.8890355585988463,
+        "auprc": 0.7490658012200895,
+        "accuracy": 0.7958584705690527,
+        "sensitivity": 0.8223514211886305,
+        "specificity": 0.7869138495092693,
+        "ppv": 0.5657777777777778,
+        "npv": 0.9291784702549575,
+        "f1": 0.6703528172722485,
+        "balanced_accuracy": 0.8046326353489499,
+        "brier": 0.11148817930647525,
+        "ece": 0.01072914671775737,
+        "threshold": 0.2753342390060425,
+        "tp": 1273,
+        "fp": 977,
+        "tn": 3608,
+        "fn": 275,
+        "threshold_kind": "site",
+        "at_global_threshold": {
+          "threshold": 0.39705267548561096,
+          "sensitivity": 0.7118863049095607,
+          "specificity": 0.8743729552889858
+        },
+        "ece_uncalibrated": 0.04245343503791323,
+        "in_distribution": true,
+        "ci95": {
+          "auroc": [
+            0.8761488606942027,
+            0.9017445899972575
+          ],
+          "auprc": [
+            0.6984935039030754,
+            0.7906606536177914
+          ],
+          "sensitivity": [
+            0.7874858969992689,
+            0.8521502839777698
+          ],
+          "specificity": [
+            0.7672294366952982,
+            0.8074026053979511
+          ],
+          "accuracy": [
+            0.7820695063893881,
+            0.8098138732540299
+          ],
+          "f1": [
+            0.6364845555205272,
+            0.6996171417260361
+          ]
+        },
+        "subgroups": {
+          "sex=F": {
+            "n": 2643,
+            "prevalence": 0.2255013242527431,
+            "auroc": 0.8925076146791998,
+            "sensitivity": 0.802013422818792,
+            "specificity": 0.8041035661944309
+          },
+          "sex=M": {
+            "n": 3490,
+            "prevalence": 0.27277936962750715,
+            "auroc": 0.8859638122388436,
+            "sensitivity": 0.8350840336134454,
+            "specificity": 0.7730496453900709
+          },
+          "age=40-59": {
+            "n": 2837,
+            "prevalence": 0.2562566090941135,
+            "auroc": 0.8943665782251282,
+            "sensitivity": 0.8294360385144429,
+            "specificity": 0.7867298578199052
+          },
+          "age=60+": {
+            "n": 1561,
+            "prevalence": 0.20499679692504805,
+            "auroc": 0.8514819198227236,
+            "sensitivity": 0.75,
+            "specificity": 0.8009669621273167
+          },
+          "age=<40": {
+            "n": 1734,
+            "prevalence": 0.2889273356401384,
+            "auroc": 0.9031555704487213,
+            "sensitivity": 0.8582834331337326,
+            "specificity": 0.772911597729116
+          },
+          "view=AP": {
+            "n": 2910,
+            "prevalence": 0.4213058419243986,
+            "auroc": 0.8475288484266079,
+            "sensitivity": 0.8972267536704731,
+            "specificity": 0.5736342042755345
+          },
+          "view=PA": {
+            "n": 3223,
+            "prevalence": 0.099906919019547,
+            "auroc": 0.854955241392452,
+            "sensitivity": 0.5372670807453416,
+            "specificity": 0.910720441227163
+          },
+          "lung_opacity_vs_normal_only": {
+            "n": 3440,
+            "prevalence": 0.45,
+            "auroc": 0.9830020049057365,
+            "sensitivity": 0.8223514211886305,
+            "specificity": 0.9883720930232558
+          }
+        }
+      },
+      "vindr_pcxr": {
+        "n": 1397,
+        "prevalence": 0.12168933428775948,
+        "auroc": 0.7498226185339663,
+        "auprc": 0.3673821830998966,
+        "accuracy": 0.8761632068718683,
+        "sensitivity": 0.2647058823529412,
+        "specificity": 0.960880195599022,
+        "ppv": 0.4838709677419355,
+        "npv": 0.9041411042944786,
+        "f1": 0.3422053231939164,
+        "balanced_accuracy": 0.6127930389759816,
+        "brier": 0.10328482327349509,
+        "ece": 0.08292322524057588,
+        "threshold": 0.39705267548561096,
+        "tp": 45,
+        "fp": 48,
+        "tn": 1179,
+        "fn": 125,
+        "threshold_kind": "global",
+        "ece_uncalibrated": 0.0992650900554278,
+        "in_distribution": false,
+        "ci95": {
+          "auroc": [
+            0.7060216280722817,
+            0.790901247766152
+          ],
+          "auprc": [
+            0.2947298324034134,
+            0.44570837937482105
+          ],
+          "sensitivity": [
+            0.1944362745098039,
+            0.33167517006802716
+          ],
+          "specificity": [
+            0.9497955350663764,
+            0.9711466947671905
+          ],
+          "accuracy": [
+            0.8589835361488904,
+            0.8919112383679313
+          ],
+          "f1": [
+            0.26823935824909584,
+            0.4133636363636364
+          ]
+        },
+        "subgroups": {
+          "sex=F": {
+            "n": 585,
+            "prevalence": 0.12136752136752137,
+            "auroc": 0.7542335726420782,
+            "sensitivity": 0.323943661971831,
+            "specificity": 0.9552529182879378,
+            "n_positive": 71
+          },
+          "sex=M": {
+            "n": 796,
+            "prevalence": 0.11809045226130653,
+            "auroc": 0.7443626113838882,
+            "sensitivity": 0.23404255319148937,
+            "specificity": 0.9643874643874644,
+            "n_positive": 94
+          },
+          "age=1-4y": {
+            "n": 672,
+            "prevalence": 0.10416666666666667,
+            "auroc": 0.7325344091124821,
+            "sensitivity": 0.2,
+            "specificity": 0.9700996677740864,
+            "n_positive": 70
+          },
+          "age=<1y": {
+            "n": 508,
+            "prevalence": 0.14763779527559054,
+            "auroc": 0.7285142417244034,
+            "sensitivity": 0.3333333333333333,
+            "specificity": 0.9353348729792148,
+            "n_positive": 75
+          },
+          "pneumonia_vs_no_finding_only": {
+            "n": 1077,
+            "prevalence": 0.15784586815227483,
+            "auroc": 0.7719274920552565,
+            "sensitivity": 0.2647058823529412,
+            "specificity": 0.9724366041896362,
+            "n_positive": 170
+          }
+        }
+      }
+    },
+    "localisation": {
+      "all_positives": {
+        "n": 1548,
+        "pointing_game_hit_rate": 0.7235142118863049,
+        "random_point_hit_rate": 0.12397432098444996,
+        "energy_in_box": 0.42042452019163973,
+        "uniform_map_energy_in_box": 0.12397432098444996
+      },
+      "detected_positives": {
+        "n": 1104,
+        "pointing_game_hit_rate": 0.8360507246376812,
+        "random_point_hit_rate": 0.14627756673321504,
+        "energy_in_box": 0.5201587093284563,
+        "uniform_map_energy_in_box": 0.14627756673321504
+      }
+    }
+  },
+  {
+    "name": "loso_kermany_vindr_base",
+    "config": {
+      "name": "loso_kermany_vindr_base",
+      "arch": "convnext_tiny.fb_in22k_ft_in1k",
+      "pretrained": true,
+      "sources": [
+        "kermany",
+        "vindr_pcxr"
+      ],
+      "img_size": 224,
+      "epochs": 10,
+      "batch_size": 32,
+      "lr": 0.0001,
+      "weight_decay": 0.05,
+      "warmup_epochs": 1.0,
+      "patience": 3,
+      "drop_path_rate": 0.1,
+      "num_workers": 4,
+      "seed": 42,
+      "amp": true,
+      "augment": "standard",
+      "balance_sources": false,
+      "max_train_samples": null,
+      "notes": ""
+    },
+    "label": "ConvNeXt-T (ImageNet-22k) \u00b7 trained on Kermany+VinDr-PCXR",
+    "summary": {
+      "config": {
+        "name": "loso_kermany_vindr_base",
+        "arch": "convnext_tiny.fb_in22k_ft_in1k",
+        "pretrained": true,
+        "sources": [
+          "kermany",
+          "vindr_pcxr"
+        ],
+        "img_size": 224,
+        "epochs": 10,
+        "batch_size": 32,
+        "lr": 0.0001,
+        "weight_decay": 0.05,
+        "warmup_epochs": 1.0,
+        "patience": 3,
+        "drop_path_rate": 0.1,
+        "num_workers": 4,
+        "seed": 42,
+        "amp": true,
+        "augment": "standard",
+        "balance_sources": false,
+        "max_train_samples": null,
+        "notes": ""
+      },
+      "temperature": 0.9544475222942886,
+      "threshold": 0.3820419907569885,
+      "site_thresholds": {
+        "kermany": 0.7982094883918762,
+        "vindr_pcxr": 0.16737712919712067
+      },
+      "best_epoch": 5,
+      "val_metrics": {
+        "n": 1909,
+        "prevalence": 0.3603981141959141,
+        "auroc": 0.9642627564139192,
+        "auprc": 0.9567879446832384,
+        "accuracy": 0.9151388161341016,
+        "sensitivity": 0.8793604651162791,
+        "specificity": 0.9352989352989353,
+        "ppv": 0.8845029239766082,
+        "npv": 0.9322448979591836,
+        "f1": 0.8819241982507289,
+        "balanced_accuracy": 0.9073297002076072,
+        "brier": 0.060541517613300705,
+        "ece": 0.025163249530455817,
+        "threshold": 0.3820419907569885,
+        "tp": 605,
+        "fp": 79,
+        "tn": 1142,
+        "fn": 83
+      },
+      "n_params": 27820897,
+      "train_seconds": 406.65134501457214
+    },
+    "eval": {
+      "kermany": {
+        "n": 624,
+        "prevalence": 0.625,
+        "auroc": 0.9893381547227701,
+        "auprc": 0.9916220292773681,
+        "accuracy": 0.9375,
+        "sensitivity": 0.9897435897435898,
+        "specificity": 0.8504273504273504,
+        "ppv": 0.9168646080760094,
+        "npv": 0.9802955665024631,
+        "f1": 0.9519112207151665,
+        "balanced_accuracy": 0.9200854700854701,
+        "brier": 0.06613558431683919,
+        "ece": 0.08501913444324133,
+        "threshold": 0.7982094883918762,
+        "tp": 386,
+        "fp": 35,
+        "tn": 199,
+        "fn": 4,
+        "threshold_kind": "site",
+        "at_global_threshold": {
+          "threshold": 0.3820419907569885,
+          "sensitivity": 0.9974358974358974,
+          "specificity": 0.7735042735042735
+        },
+        "ece_uncalibrated": 0.08583838978927072,
+        "in_distribution": true,
+        "ci95": {
+          "auroc": [
+            0.9796922563314098,
+            0.9954865781719962
+          ],
+          "auprc": [
+            0.980934233812357,
+            0.9972460018120332
+          ],
+          "sensitivity": [
+            0.9794031126011861,
+            0.9976077982437108
+          ],
+          "specificity": [
+            0.8055465367965369,
+            0.8922413793103449
+          ],
+          "accuracy": [
+            0.9159422460895346,
+            0.9547581903276131
+          ],
+          "f1": [
+            0.9331580003076929,
+            0.9664429530201342
+          ]
+        }
+      },
+      "rsna": {
+        "n": 6133,
+        "prevalence": 0.2524050220120659,
+        "auroc": 0.821418497572412,
+        "auprc": 0.5738645346001713,
+        "accuracy": 0.5574759497798794,
+        "sensitivity": 0.9534883720930233,
+        "specificity": 0.423773173391494,
+        "ppv": 0.35842642059252067,
+        "npv": 0.9642679900744416,
+        "f1": 0.5210024708789269,
+        "balanced_accuracy": 0.6886307727422587,
+        "brier": 0.37470713321065097,
+        "ece": 0.40114367105388393,
+        "threshold": 0.3820419907569885,
+        "tp": 1476,
+        "fp": 2642,
+        "tn": 1943,
+        "fn": 72,
+        "threshold_kind": "global",
+        "ece_uncalibrated": 0.4019011457097019,
+        "in_distribution": false,
+        "ci95": {
+          "auroc": [
+            0.8057728676108238,
+            0.8372154578858921
+          ],
+          "auprc": [
+            0.5231533199611175,
+            0.6241604483943725
+          ],
+          "sensitivity": [
+            0.9409337622792858,
+            0.9653772161980537
+          ],
+          "specificity": [
+            0.40224806143226466,
+            0.4438176919778851
+          ],
+          "accuracy": [
+            0.5410434765273097,
+            0.5733813122998613
+          ],
+          "f1": [
+            0.4865288919201194,
+            0.5513283508090887
+          ]
+        },
+        "subgroups": {
+          "sex=F": {
+            "n": 2643,
+            "prevalence": 0.2255013242527431,
+            "auroc": 0.8170849958852865,
+            "sensitivity": 0.9278523489932886,
+            "specificity": 0.4846116267708842
+          },
+          "sex=M": {
+            "n": 3490,
+            "prevalence": 0.27277936962750715,
+            "auroc": 0.8229814384382594,
+            "sensitivity": 0.9695378151260504,
+            "specificity": 0.3747044917257683
+          },
+          "age=40-59": {
+            "n": 2837,
+            "prevalence": 0.2562566090941135,
+            "auroc": 0.8350342575148144,
+            "sensitivity": 0.9601100412654745,
+            "specificity": 0.4218009478672986
+          },
+          "age=60+": {
+            "n": 1561,
+            "prevalence": 0.20499679692504805,
+            "auroc": 0.7947698428686543,
+            "sensitivity": 0.9625,
+            "specificity": 0.3698630136986301
+          },
+          "age=<40": {
+            "n": 1734,
+            "prevalence": 0.2889273356401384,
+            "auroc": 0.831158445477253,
+            "sensitivity": 0.93812375249501,
+            "specificity": 0.48175182481751827
+          },
+          "view=AP": {
+            "n": 2910,
+            "prevalence": 0.4213058419243986,
+            "auroc": 0.7183338144633495,
+            "sensitivity": 0.99836867862969,
+            "specificity": 0.04334916864608076
+          },
+          "view=PA": {
+            "n": 3223,
+            "prevalence": 0.099906919019547,
+            "auroc": 0.7810473364292887,
+            "sensitivity": 0.782608695652174,
+            "specificity": 0.6446053085143054
+          },
+          "lung_opacity_vs_normal_only": {
+            "n": 3440,
+            "prevalence": 0.45,
+            "auroc": 0.9480884084216966,
+            "sensitivity": 0.9534883720930233,
+            "specificity": 0.7309725158562368
+          }
+        }
+      },
+      "vindr_pcxr": {
+        "n": 1397,
+        "prevalence": 0.12168933428775948,
+        "auroc": 0.8273023634881825,
+        "auprc": 0.43271781463435,
+        "accuracy": 0.7974230493915533,
+        "sensitivity": 0.6705882352941176,
+        "specificity": 0.8149959250203749,
+        "ppv": 0.3343108504398827,
+        "npv": 0.946969696969697,
+        "f1": 0.446183953033268,
+        "balanced_accuracy": 0.7427920801572463,
+        "brier": 0.09079260141408135,
+        "ece": 0.03437975939808569,
+        "threshold": 0.16737712919712067,
+        "tp": 114,
+        "fp": 227,
+        "tn": 1000,
+        "fn": 56,
+        "threshold_kind": "site",
+        "at_global_threshold": {
+          "threshold": 0.3820419907569885,
+          "sensitivity": 0.45294117647058824,
+          "specificity": 0.928280358598207
+        },
+        "ece_uncalibrated": 0.03857433835961826,
+        "in_distribution": true,
+        "ci95": {
+          "auroc": [
+            0.7973833269814969,
+            0.8597503860664422
+          ],
+          "auprc": [
+            0.3606322565521094,
+            0.5137446832590189
+          ],
+          "sensitivity": [
+            0.6021546961325968,
+            0.7409334228104126
+          ],
+          "specificity": [
+            0.7948888039433446,
+            0.837119817309882
+          ],
+          "accuracy": [
+            0.7766642806012884,
+            0.8181818181818182
+          ],
+          "f1": [
+            0.3901351452158345,
+            0.49715777360629754
+          ]
+        },
+        "subgroups": {
+          "sex=F": {
+            "n": 585,
+            "prevalence": 0.12136752136752137,
+            "auroc": 0.8669233298624432,
+            "sensitivity": 0.704225352112676,
+            "specificity": 0.8229571984435797,
+            "n_positive": 71
+          },
+          "sex=M": {
+            "n": 796,
+            "prevalence": 0.11809045226130653,
+            "auroc": 0.7920834091046857,
+            "sensitivity": 0.6276595744680851,
+            "specificity": 0.811965811965812,
+            "n_positive": 94
+          },
+          "age=1-4y": {
+            "n": 672,
+            "prevalence": 0.10416666666666667,
+            "auroc": 0.8216777408637874,
+            "sensitivity": 0.6428571428571429,
+            "specificity": 0.8338870431893688,
+            "n_positive": 70
+          },
+          "age=<1y": {
+            "n": 508,
+            "prevalence": 0.14763779527559054,
+            "auroc": 0.7852655889145497,
+            "sensitivity": 0.6533333333333333,
+            "specificity": 0.7505773672055427,
+            "n_positive": 75
+          },
+          "pneumonia_vs_no_finding_only": {
+            "n": 1077,
+            "prevalence": 0.15784586815227483,
+            "auroc": 0.8628737272196642,
+            "sensitivity": 0.6705882352941176,
+            "specificity": 0.8721058434399118,
+            "n_positive": 170
+          }
+        }
+      }
+    },
+    "localisation": {
+      "all_positives": {
+        "n": 1548,
+        "pointing_game_hit_rate": 0.49870801033591733,
+        "random_point_hit_rate": 0.12397432098444996,
+        "energy_in_box": 0.2942680111630853,
+        "uniform_map_energy_in_box": 0.12397432098444996
+      },
+      "detected_positives": {
+        "n": 1475,
+        "pointing_game_hit_rate": 0.5077966101694915,
+        "random_point_hit_rate": 0.12775745308716707,
+        "energy_in_box": 0.3021075479781754,
+        "uniform_map_energy_in_box": 0.12775745308716707
+      }
+    }
+  },
+  {
+    "name": "loso_kermany_vindr_dg",
+    "config": {
+      "name": "loso_kermany_vindr_dg",
+      "arch": "convnext_tiny.fb_in22k_ft_in1k",
+      "pretrained": true,
+      "sources": [
+        "kermany",
+        "vindr_pcxr"
+      ],
+      "img_size": 224,
+      "epochs": 10,
+      "batch_size": 32,
+      "lr": 0.0001,
+      "weight_decay": 0.05,
+      "warmup_epochs": 1.0,
+      "patience": 3,
+      "drop_path_rate": 0.1,
+      "num_workers": 4,
+      "seed": 42,
+      "amp": true,
+      "augment": "strong",
+      "balance_sources": true,
+      "max_train_samples": null,
+      "notes": ""
+    },
+    "label": "ConvNeXt-T (ImageNet-22k) \u00b7 trained on Kermany+VinDr-PCXR \u00b7 strong aug, balanced",
+    "summary": {
+      "config": {
+        "name": "loso_kermany_vindr_dg",
+        "arch": "convnext_tiny.fb_in22k_ft_in1k",
+        "pretrained": true,
+        "sources": [
+          "kermany",
+          "vindr_pcxr"
+        ],
+        "img_size": 224,
+        "epochs": 10,
+        "batch_size": 32,
+        "lr": 0.0001,
+        "weight_decay": 0.05,
+        "warmup_epochs": 1.0,
+        "patience": 3,
+        "drop_path_rate": 0.1,
+        "num_workers": 4,
+        "seed": 42,
+        "amp": true,
+        "augment": "strong",
+        "balance_sources": true,
+        "max_train_samples": null,
+        "notes": ""
+      },
+      "temperature": 1.05998769205308,
+      "threshold": 0.5928811430931091,
+      "site_thresholds": {
+        "kermany": 0.6398904323577881,
+        "vindr_pcxr": 0.16806969046592712
+      },
+      "best_epoch": 9,
+      "val_metrics": {
+        "n": 1909,
+        "prevalence": 0.3603981141959141,
+        "auroc": 0.95665009618498,
+        "auprc": 0.9518800439267591,
+        "accuracy": 0.928234677841802,
+        "sensitivity": 0.8401162790697675,
+        "specificity": 0.9778869778869779,
+        "ppv": 0.9553719008264463,
+        "npv": 0.9156441717791411,
+        "f1": 0.8940448569218871,
+        "balanced_accuracy": 0.9090016284783726,
+        "brier": 0.061860428820924025,
+        "ece": 0.02766972216502167,
+        "threshold": 0.5928811430931091,
+        "tp": 578,
+        "fp": 27,
+        "tn": 1194,
+        "fn": 110
+      },
+      "n_params": 27820897,
+      "train_seconds": 490.61735701560974
+    },
+    "eval": {
+      "kermany": {
+        "n": 624,
+        "prevalence": 0.625,
+        "auroc": 0.9929377602454525,
+        "auprc": 0.9957870957583347,
+        "accuracy": 0.9583333333333334,
+        "sensitivity": 0.9846153846153847,
+        "specificity": 0.9145299145299145,
+        "ppv": 0.9504950495049505,
+        "npv": 0.9727272727272728,
+        "f1": 0.9672544080604534,
+        "balanced_accuracy": 0.9495726495726495,
+        "brier": 0.03503212759778639,
+        "ece": 0.035062589819109466,
+        "threshold": 0.6398904323577881,
+        "tp": 384,
+        "fp": 20,
+        "tn": 214,
+        "fn": 6,
+        "threshold_kind": "site",
+        "at_global_threshold": {
+          "threshold": 0.5928811430931091,
+          "sensitivity": 0.9846153846153847,
+          "specificity": 0.905982905982906
+        },
+        "ece_uncalibrated": 0.034980820310150915,
+        "in_distribution": true,
+        "ci95": {
+          "auroc": [
+            0.9874334096157246,
+            0.9967548821112546
+          ],
+          "auprc": [
+            0.9919661112984165,
+            0.9980813493790095
+          ],
+          "sensitivity": [
+            0.9698475205698823,
+            0.9950620324758256
+          ],
+          "specificity": [
+            0.8782341723874905,
+            0.9474130240856378
+          ],
+          "accuracy": [
+            0.9410779123825037,
+            0.9728957430355336
+          ],
+          "f1": [
+            0.952514559780747,
+            0.9790948847369106
+          ]
+        }
+      },
+      "rsna": {
+        "n": 6133,
+        "prevalence": 0.2524050220120659,
+        "auroc": 0.8487369638665574,
+        "auprc": 0.6459364656539309,
+        "accuracy": 0.665905755747595,
+        "sensitivity": 0.9063307493540051,
+        "specificity": 0.5847328244274809,
+        "ppv": 0.4242515875415785,
+        "npv": 0.948690728945506,
+        "f1": 0.5779608650875386,
+        "balanced_accuracy": 0.745531786890743,
+        "brier": 0.31245657266148213,
+        "ece": 0.32334835604716994,
+        "threshold": 0.5928811430931091,
+        "tp": 1403,
+        "fp": 1904,
+        "tn": 2681,
+        "fn": 145,
+        "threshold_kind": "global",
+        "ece_uncalibrated": 0.32149110028298367,
+        "in_distribution": false,
+        "ci95": {
+          "auroc": [
+            0.8340318251549601,
+            0.864367492838973
+          ],
+          "auprc": [
+            0.5906750029250712,
+            0.6962183079258768
+          ],
+          "sensitivity": [
+            0.8845222520980033,
+            0.9255943273162198
+          ],
+          "specificity": [
+            0.5602968967274957,
+            0.6083782894809214
+          ],
+          "accuracy": [
+            0.6500730822480607,
+            0.6828813205513043
+          ],
+          "f1": [
+            0.542937548882212,
+            0.6106442970990965
+          ]
+        },
+        "subgroups": {
+          "sex=F": {
+            "n": 2643,
+            "prevalence": 0.2255013242527431,
+            "auroc": 0.8397929692494828,
+            "sensitivity": 0.8741610738255033,
+            "specificity": 0.6018563751831949
+          },
+          "sex=M": {
+            "n": 3490,
+            "prevalence": 0.27277936962750715,
+            "auroc": 0.8533296001615777,
+            "sensitivity": 0.9264705882352942,
+            "specificity": 0.5709219858156028
+          },
+          "age=40-59": {
+            "n": 2837,
+            "prevalence": 0.2562566090941135,
+            "auroc": 0.861640384101384,
+            "sensitivity": 0.9160935350756534,
+            "specificity": 0.5862559241706161
+          },
+          "age=60+": {
+            "n": 1561,
+            "prevalence": 0.20499679692504805,
+            "auroc": 0.8109500906526994,
+            "sensitivity": 0.903125,
+            "specificity": 0.5503626107977437
+          },
+          "age=<40": {
+            "n": 1734,
+            "prevalence": 0.2889273356401384,
+            "auroc": 0.8591891642505743,
+            "sensitivity": 0.8942115768463074,
+            "specificity": 0.616382806163828
+          },
+          "view=AP": {
+            "n": 2910,
+            "prevalence": 0.4213058419243986,
+            "auroc": 0.7806904441766476,
+            "sensitivity": 0.9869494290375204,
+            "specificity": 0.16508313539192399
+          },
+          "view=PA": {
+            "n": 3223,
+            "prevalence": 0.099906919019547,
+            "auroc": 0.8109904273745828,
+            "sensitivity": 0.5993788819875776,
+            "specificity": 0.828335056876939
+          },
+          "lung_opacity_vs_normal_only": {
+            "n": 3440,
+            "prevalence": 0.45,
+            "auroc": 0.967163864169002,
+            "sensitivity": 0.9063307493540051,
+            "specificity": 0.9001057082452432
+          }
+        }
+      },
+      "vindr_pcxr": {
+        "n": 1397,
+        "prevalence": 0.12168933428775948,
+        "auroc": 0.8276739057481183,
+        "auprc": 0.426726792699369,
+        "accuracy": 0.7630637079455977,
+        "sensitivity": 0.7,
+        "specificity": 0.771801140994295,
+        "ppv": 0.2982456140350877,
+        "npv": 0.9488977955911824,
+        "f1": 0.4182776801405975,
+        "balanced_accuracy": 0.7359005704971475,
+        "brier": 0.09294858082879623,
+        "ece": 0.04603560304511858,
+        "threshold": 0.16806969046592712,
+        "tp": 119,
+        "fp": 280,
+        "tn": 947,
+        "fn": 51,
+        "threshold_kind": "site",
+        "at_global_threshold": {
+          "threshold": 0.5928811430931091,
+          "sensitivity": 0.23529411764705882,
+          "specificity": 0.9657701711491442
+        },
+        "ece_uncalibrated": 0.03852442728019531,
+        "in_distribution": true,
+        "ci95": {
+          "auroc": [
+            0.7968580032003956,
+            0.8585196361522917
+          ],
+          "auprc": [
+            0.3520139828149162,
+            0.506587989495266
+          ],
+          "sensitivity": [
+            0.6401947212993725,
+            0.7643762677484787
+          ],
+          "specificity": [
+            0.7479369537457904,
+            0.7939060702465591
+          ],
+          "accuracy": [
+            0.7415891195418755,
+            0.7859699355762347
+          ],
+          "f1": [
+            0.3652717168024793,
+            0.4704095463364073
+          ]
+        },
+        "subgroups": {
+          "sex=F": {
+            "n": 585,
+            "prevalence": 0.12136752136752137,
+            "auroc": 0.8620321148681974,
+            "sensitivity": 0.7183098591549296,
+            "specificity": 0.7704280155642024,
+            "n_positive": 71
+          },
+          "sex=M": {
+            "n": 796,
+            "prevalence": 0.11809045226130653,
+            "auroc": 0.7952430744983937,
+            "sensitivity": 0.6702127659574468,
+            "specificity": 0.7777777777777778,
+            "n_positive": 94
+          },
+          "age=1-4y": {
+            "n": 672,
+            "prevalence": 0.10416666666666667,
+            "auroc": 0.8269814902705269,
+            "sensitivity": 0.7142857142857143,
+            "specificity": 0.7807308970099668,
+            "n_positive": 70
+          },
+          "age=<1y": {
+            "n": 508,
+            "prevalence": 0.14763779527559054,
+            "auroc": 0.76788298691301,
+            "sensitivity": 0.64,
+            "specificity": 0.7066974595842956,
+            "n_positive": 75
+          },
+          "pneumonia_vs_no_finding_only": {
+            "n": 1077,
+            "prevalence": 0.15784586815227483,
+            "auroc": 0.8650398858551138,
+            "sensitivity": 0.7,
+            "specificity": 0.8357221609702316,
+            "n_positive": 170
+          }
+        }
+      }
+    },
+    "localisation": {
+      "all_positives": {
+        "n": 1548,
+        "pointing_game_hit_rate": 0.6188630490956072,
+        "random_point_hit_rate": 0.12397432098444996,
+        "energy_in_box": 0.3066666142184064,
+        "uniform_map_energy_in_box": 0.12397432098444996
+      },
+      "detected_positives": {
+        "n": 1402,
+        "pointing_game_hit_rate": 0.6440798858773181,
+        "random_point_hit_rate": 0.13187856917686833,
+        "energy_in_box": 0.3220808179734929,
+        "uniform_map_energy_in_box": 0.13187856917686833
+      }
+    }
+  },
+  {
+    "name": "loso_rsna_vindr_base",
+    "config": {
+      "name": "loso_rsna_vindr_base",
+      "arch": "convnext_tiny.fb_in22k_ft_in1k",
+      "pretrained": true,
+      "sources": [
+        "rsna",
+        "vindr_pcxr"
+      ],
+      "img_size": 224,
+      "epochs": 10,
+      "batch_size": 32,
+      "lr": 0.0001,
+      "weight_decay": 0.05,
+      "warmup_epochs": 1.0,
+      "patience": 3,
+      "drop_path_rate": 0.1,
+      "num_workers": 4,
+      "seed": 42,
+      "amp": true,
+      "augment": "standard",
+      "balance_sources": false,
+      "max_train_samples": null,
+      "notes": ""
+    },
+    "label": "ConvNeXt-T (ImageNet-22k) \u00b7 trained on RSNA+VinDr-PCXR",
+    "summary": {
+      "config": {
+        "name": "loso_rsna_vindr_base",
+        "arch": "convnext_tiny.fb_in22k_ft_in1k",
+        "pretrained": true,
+        "sources": [
+          "rsna",
+          "vindr_pcxr"
+        ],
+        "img_size": 224,
+        "epochs": 10,
+        "batch_size": 32,
+        "lr": 0.0001,
+        "weight_decay": 0.05,
+        "warmup_epochs": 1.0,
+        "patience": 3,
+        "drop_path_rate": 0.1,
+        "num_workers": 4,
+        "seed": 42,
+        "amp": true,
+        "augment": "standard",
+        "balance_sources": false,
+        "max_train_samples": null,
+        "notes": ""
+      },
+      "temperature": 1.2373648549792164,
+      "threshold": 0.1896664798259735,
+      "site_thresholds": {
+        "rsna": 0.1995609849691391,
+        "vindr_pcxr": 0.09022766351699829
+      },
+      "best_epoch": 5,
+      "val_metrics": {
+        "n": 4264,
+        "prevalence": 0.21106941838649157,
+        "auroc": 0.9015099418681463,
+        "auprc": 0.7278479461741405,
+        "accuracy": 0.8224671669793621,
+        "sensitivity": 0.8144444444444444,
+        "specificity": 0.8246135552913199,
+        "ppv": 0.5540438397581254,
+        "npv": 0.9432165929955797,
+        "f1": 0.6594691857849753,
+        "balanced_accuracy": 0.8195289998678821,
+        "brier": 0.09969854955300421,
+        "ece": 0.036457096522684446,
+        "threshold": 0.1896664798259735,
+        "tp": 733,
+        "fp": 590,
+        "tn": 2774,
+        "fn": 167
+      },
+      "n_params": 27820897,
+      "train_seconds": 888.2283833026886
+    },
+    "eval": {
+      "kermany": {
+        "n": 624,
+        "prevalence": 0.625,
+        "auroc": 0.9297611220688144,
+        "auprc": 0.9502672861138962,
+        "accuracy": 0.8621794871794872,
+        "sensitivity": 0.8794871794871795,
+        "specificity": 0.8333333333333334,
+        "ppv": 0.8979057591623036,
+        "npv": 0.8057851239669421,
+        "f1": 0.88860103626943,
+        "balanced_accuracy": 0.8564102564102565,
+        "brier": 0.2622943713291379,
+        "ece": 0.3452564358729152,
+        "threshold": 0.1896664798259735,
+        "tp": 343,
+        "fp": 39,
+        "tn": 195,
+        "fn": 47,
+        "threshold_kind": "global",
+        "ece_uncalibrated": 0.36118106750281853,
+        "in_distribution": false,
+        "ci95": {
+          "auroc": [
+            0.9066698736624501,
+            0.9490576878063712
+          ],
+          "auprc": [
+            0.924279739966408,
+            0.9684902466344011
+          ],
+          "sensitivity": [
+            0.8390900922284009,
+            0.9159729860530599
+          ],
+          "specificity": [
+            0.784846886961956,
+            0.8803466076696165
+          ],
+          "accuracy": [
+            0.8319825060643339,
+            0.8913076718521473
+          ],
+          "f1": [
+            0.8587810719408367,
+            0.9143030653556969
+          ]
+        }
+      },
+      "rsna": {
+        "n": 6133,
+        "prevalence": 0.2524050220120659,
+        "auroc": 0.8893172038920307,
+        "auprc": 0.7505194773087628,
+        "accuracy": 0.8027066688406979,
+        "sensitivity": 0.8229974160206718,
+        "specificity": 0.795856052344602,
+        "ppv": 0.5764705882352941,
+        "npv": 0.9301554932449656,
+        "f1": 0.6780202235231505,
+        "balanced_accuracy": 0.8094267341826369,
+        "brier": 0.11327875031769517,
+        "ece": 0.035710769791727624,
+        "threshold": 0.1995609849691391,
+        "tp": 1274,
+        "fp": 936,
+        "tn": 3649,
+        "fn": 274,
+        "threshold_kind": "site",
+        "at_global_threshold": {
+          "threshold": 0.1896664798259735,
+          "sensitivity": 0.8352713178294574,
+          "specificity": 0.7849509269356597
+        },
+        "ece_uncalibrated": 0.05507710738957263,
+        "in_distribution": true,
+        "ci95": {
+          "auroc": [
+            0.8764787513952829,
+            0.9022458870044866
+          ],
+          "auprc": [
+            0.7009824770258216,
+            0.791013916445195
+          ],
+          "sensitivity": [
+            0.7895031085935341,
+            0.8522145154142231
+          ],
+          "specificity": [
+            0.7752937835225022,
+            0.8162771618411141
+          ],
+          "accuracy": [
+            0.788813956644025,
+            0.8164518729162087
+          ],
+          "f1": [
+            0.646040605028988,
+            0.7088157501643132
+          ]
+        },
+        "subgroups": {
+          "sex=F": {
+            "n": 2643,
+            "prevalence": 0.2255013242527431,
+            "auroc": 0.887777333337705,
+            "sensitivity": 0.7785234899328859,
+            "specificity": 0.8094772838299951
+          },
+          "sex=M": {
+            "n": 3490,
+            "prevalence": 0.27277936962750715,
+            "auroc": 0.8891817069617446,
+            "sensitivity": 0.8508403361344538,
+            "specificity": 0.7848699763593381
+          },
+          "age=40-59": {
+            "n": 2837,
+            "prevalence": 0.2562566090941135,
+            "auroc": 0.8932329185055772,
+            "sensitivity": 0.8363136176066025,
+            "specificity": 0.7933649289099526
+          },
+          "age=60+": {
+            "n": 1561,
+            "prevalence": 0.20499679692504805,
+            "auroc": 0.8498224717969379,
+            "sensitivity": 0.746875,
+            "specificity": 0.7993553585817889
+          },
+          "age=<40": {
+            "n": 1734,
+            "prevalence": 0.2889273356401384,
+            "auroc": 0.906993798291495,
+            "sensitivity": 0.8522954091816367,
+            "specificity": 0.7964314679643146
+          },
+          "view=AP": {
+            "n": 2910,
+            "prevalence": 0.4213058419243986,
+            "auroc": 0.8526669295121924,
+            "sensitivity": 0.8939641109298532,
+            "specificity": 0.6015439429928741
+          },
+          "view=PA": {
+            "n": 3223,
+            "prevalence": 0.099906919019547,
+            "auroc": 0.8504788453756575,
+            "sensitivity": 0.5527950310559007,
+            "specificity": 0.9086521889003791
+          },
+          "lung_opacity_vs_normal_only": {
+            "n": 3440,
+            "prevalence": 0.45,
+            "auroc": 0.9833640966178825,
+            "sensitivity": 0.8229974160206718,
+            "specificity": 0.9931289640591966
+          }
+        }
+      },
+      "vindr_pcxr": {
+        "n": 1397,
+        "prevalence": 0.12168933428775948,
+        "auroc": 0.8349249724339614,
+        "auprc": 0.4655689194315007,
+        "accuracy": 0.7265569076592698,
+        "sensitivity": 0.7941176470588235,
+        "specificity": 0.7171964140179299,
+        "ppv": 0.2800829875518672,
+        "npv": 0.9617486338797814,
+        "f1": 0.41411042944785276,
+        "balanced_accuracy": 0.7556570305383767,
+        "brier": 0.08576813422231003,
+        "ece": 0.031027880407277816,
+        "threshold": 0.09022766351699829,
+        "tp": 135,
+        "fp": 347,
+        "tn": 880,
+        "fn": 35,
+        "threshold_kind": "site",
+        "at_global_threshold": {
+          "threshold": 0.1896664798259735,
+          "sensitivity": 0.5294117647058824,
+          "specificity": 0.9111654441727791
+        },
+        "ece_uncalibrated": 0.04705517110131473,
+        "in_distribution": true,
+        "ci95": {
+          "auroc": [
+            0.8053222069618254,
+            0.8671331544337659
+          ],
+          "auprc": [
+            0.3915410597207149,
+            0.5423904608565895
+          ],
+          "sensitivity": [
+            0.7377955102875051,
+            0.8562517959770114
+          ],
+          "specificity": [
+            0.694667128364613,
+            0.7424366312346689
+          ],
+          "accuracy": [
+            0.7043664996420902,
+            0.7494631352899069
+          ],
+          "f1": [
+            0.3615077799184482,
+            0.46246648623235365
+          ]
+        },
+        "subgroups": {
+          "sex=F": {
+            "n": 585,
+            "prevalence": 0.12136752136752137,
+            "auroc": 0.8683619225078096,
+            "sensitivity": 0.8309859154929577,
+            "specificity": 0.7217898832684825,
+            "n_positive": 71
+          },
+          "sex=M": {
+            "n": 796,
+            "prevalence": 0.11809045226130653,
+            "auroc": 0.8034566890949869,
+            "sensitivity": 0.7553191489361702,
+            "specificity": 0.717948717948718,
+            "n_positive": 94
+          },
+          "age=1-4y": {
+            "n": 672,
+            "prevalence": 0.10416666666666667,
+            "auroc": 0.8270408163265306,
+            "sensitivity": 0.7142857142857143,
+            "specificity": 0.770764119601329,
+            "n_positive": 70
+          },
+          "age=<1y": {
+            "n": 508,
+            "prevalence": 0.14763779527559054,
+            "auroc": 0.7866666666666666,
+            "sensitivity": 0.8533333333333334,
+            "specificity": 0.5773672055427251,
+            "n_positive": 75
+          },
+          "pneumonia_vs_no_finding_only": {
+            "n": 1077,
+            "prevalence": 0.15784586815227483,
+            "auroc": 0.8688014786951164,
+            "sensitivity": 0.7941176470588235,
+            "specificity": 0.7816979051819184,
+            "n_positive": 170
+          }
+        }
+      }
+    },
+    "localisation": {
+      "all_positives": {
+        "n": 1548,
+        "pointing_game_hit_rate": 0.6886304909560723,
+        "random_point_hit_rate": 0.12397432098444996,
+        "energy_in_box": 0.4481545492076587,
+        "uniform_map_energy_in_box": 0.12397432098444996
+      },
+      "detected_positives": {
+        "n": 1292,
+        "pointing_game_hit_rate": 0.7941176470588235,
+        "random_point_hit_rate": 0.13791458709306093,
+        "energy_in_box": 0.5119497386537544,
+        "uniform_map_energy_in_box": 0.13791458709306093
+      }
+    }
+  },
+  {
+    "name": "loso_rsna_vindr_dg",
+    "config": {
+      "name": "loso_rsna_vindr_dg",
+      "arch": "convnext_tiny.fb_in22k_ft_in1k",
+      "pretrained": true,
+      "sources": [
+        "rsna",
+        "vindr_pcxr"
+      ],
+      "img_size": 224,
+      "epochs": 10,
+      "batch_size": 32,
+      "lr": 0.0001,
+      "weight_decay": 0.05,
+      "warmup_epochs": 1.0,
+      "patience": 3,
+      "drop_path_rate": 0.1,
+      "num_workers": 4,
+      "seed": 42,
+      "amp": true,
+      "augment": "strong",
+      "balance_sources": true,
+      "max_train_samples": null,
+      "notes": ""
+    },
+    "label": "ConvNeXt-T (ImageNet-22k) \u00b7 trained on RSNA+VinDr-PCXR \u00b7 strong aug, balanced",
+    "summary": {
+      "config": {
+        "name": "loso_rsna_vindr_dg",
+        "arch": "convnext_tiny.fb_in22k_ft_in1k",
+        "pretrained": true,
+        "sources": [
+          "rsna",
+          "vindr_pcxr"
+        ],
+        "img_size": 224,
+        "epochs": 10,
+        "batch_size": 32,
+        "lr": 0.0001,
+        "weight_decay": 0.05,
+        "warmup_epochs": 1.0,
+        "patience": 3,
+        "drop_path_rate": 0.1,
+        "num_workers": 4,
+        "seed": 42,
+        "amp": true,
+        "augment": "strong",
+        "balance_sources": true,
+        "max_train_samples": null,
+        "notes": ""
+      },
+      "temperature": 1.4194361069342902,
+      "threshold": 0.2115774154663086,
+      "site_thresholds": {
+        "rsna": 0.23742727935314178,
+        "vindr_pcxr": 0.11884259432554245
+      },
+      "best_epoch": 4,
+      "val_metrics": {
+        "n": 4264,
+        "prevalence": 0.21106941838649157,
+        "auroc": 0.8955585282071609,
+        "auprc": 0.7064062871850348,
+        "accuracy": 0.8224671669793621,
+        "sensitivity": 0.8011111111111111,
+        "specificity": 0.8281807372175981,
+        "ppv": 0.5550423402617398,
+        "npv": 0.9396290050590219,
+        "f1": 0.6557526148249203,
+        "balanced_accuracy": 0.8146459241643547,
+        "brier": 0.10452227230301571,
+        "ece": 0.04345694739645868,
+        "threshold": 0.2115774154663086,
+        "tp": 721,
+        "fp": 578,
+        "tn": 2786,
+        "fn": 179
+      },
+      "n_params": 27820897,
+      "train_seconds": 786.2722542285919
+    },
+    "eval": {
+      "kermany": {
+        "n": 624,
+        "prevalence": 0.625,
+        "auroc": 0.9070293666447512,
+        "auprc": 0.9401209268680755,
+        "accuracy": 0.8205128205128205,
+        "sensitivity": 0.8102564102564103,
+        "specificity": 0.8376068376068376,
+        "ppv": 0.8926553672316384,
+        "npv": 0.725925925925926,
+        "f1": 0.8494623655913979,
+        "balanced_accuracy": 0.8239316239316239,
+        "brier": 0.2762895318157294,
+        "ece": 0.3543712111564579,
+        "threshold": 0.2115774154663086,
+        "tp": 316,
+        "fp": 38,
+        "tn": 196,
+        "fn": 74,
+        "threshold_kind": "global",
+        "ece_uncalibrated": 0.39338209107546185,
+        "in_distribution": false,
+        "ci95": {
+          "auroc": [
+            0.8784929833918499,
+            0.9323032969371281
+          ],
+          "auprc": [
+            0.913970734720625,
+            0.9601666803088676
+          ],
+          "sensitivity": [
+            0.7590867245774714,
+            0.8543360199577816
+          ],
+          "specificity": [
+            0.7874864130434782,
+            0.8838219917012448
+          ],
+          "accuracy": [
+            0.7830053297611583,
+            0.8548773026843202
+          ],
+          "f1": [
+            0.8124033347457054,
+            0.8804212386174828
+          ]
+        }
+      },
+      "rsna": {
+        "n": 6133,
+        "prevalence": 0.2524050220120659,
+        "auroc": 0.8841518517579231,
+        "auprc": 0.7401625802791129,
+        "accuracy": 0.8040110875591064,
+        "sensitivity": 0.789405684754522,
+        "specificity": 0.8089422028353326,
+        "ppv": 0.5824594852240229,
+        "npv": 0.9192069392812887,
+        "f1": 0.6703236423477784,
+        "balanced_accuracy": 0.7991739437949272,
+        "brier": 0.1194757390657393,
+        "ece": 0.051571703567273634,
+        "threshold": 0.23742727935314178,
+        "tp": 1222,
+        "fp": 876,
+        "tn": 3709,
+        "fn": 326,
+        "threshold_kind": "site",
+        "at_global_threshold": {
+          "threshold": 0.2115774154663086,
+          "sensitivity": 0.8184754521963824,
+          "specificity": 0.7794983642311887
+        },
+        "ece_uncalibrated": 0.07907322169346914,
+        "in_distribution": true,
+        "ci95": {
+          "auroc": [
+            0.8707413837398138,
+            0.8980486578992798
+          ],
+          "auprc": [
+            0.6868078724018299,
+            0.7811251196158918
+          ],
+          "sensitivity": [
+            0.7510383472520851,
+            0.8230272596843615
+          ],
+          "specificity": [
+            0.78940611741265,
+            0.8286309247586557
+          ],
+          "accuracy": [
+            0.7898282041628951,
+            0.817589960672163
+          ],
+          "f1": [
+            0.6342992450650361,
+            0.7020578165643517
+          ]
+        },
+        "subgroups": {
+          "sex=F": {
+            "n": 2643,
+            "prevalence": 0.2255013242527431,
+            "auroc": 0.8863142329747576,
+            "sensitivity": 0.7734899328859061,
+            "specificity": 0.82266731802638
+          },
+          "sex=M": {
+            "n": 3490,
+            "prevalence": 0.27277936962750715,
+            "auroc": 0.8818805004271212,
+            "sensitivity": 0.7993697478991597,
+            "specificity": 0.7978723404255319
+          },
+          "age=40-59": {
+            "n": 2837,
+            "prevalence": 0.2562566090941135,
+            "auroc": 0.8883022484142453,
+            "sensitivity": 0.796423658872077,
+            "specificity": 0.8037914691943128
+          },
+          "age=60+": {
+            "n": 1561,
+            "prevalence": 0.20499679692504805,
+            "auroc": 0.8429832292506044,
+            "sensitivity": 0.703125,
+            "specificity": 0.8203062046736502
+          },
+          "age=<40": {
+            "n": 1734,
+            "prevalence": 0.2889273356401384,
+            "auroc": 0.9024991379770873,
+            "sensitivity": 0.8343313373253493,
+            "specificity": 0.8061638280616383
+          },
+          "view=AP": {
+            "n": 2910,
+            "prevalence": 0.4213058419243986,
+            "auroc": 0.843201100076335,
+            "sensitivity": 0.867862969004894,
+            "specificity": 0.6223277909738717
+          },
+          "view=PA": {
+            "n": 3223,
+            "prevalence": 0.099906919019547,
+            "auroc": 0.8446594770276259,
+            "sensitivity": 0.4906832298136646,
+            "specificity": 0.9172699069286453
+          },
+          "lung_opacity_vs_normal_only": {
+            "n": 3440,
+            "prevalence": 0.45,
+            "auroc": 0.9829127196792151,
+            "sensitivity": 0.789405684754522,
+            "specificity": 0.9952431289640592
+          }
+        }
+      },
+      "vindr_pcxr": {
+        "n": 1397,
+        "prevalence": 0.12168933428775948,
+        "auroc": 0.8338966393403328,
+        "auprc": 0.40488966611840366,
+        "accuracy": 0.8167501789549033,
+        "sensitivity": 0.6411764705882353,
+        "specificity": 0.8410757946210269,
+        "ppv": 0.35855263157894735,
+        "npv": 0.9441903019213175,
+        "f1": 0.459915611814346,
+        "balanced_accuracy": 0.7411261326046311,
+        "brier": 0.09010321141508083,
+        "ece": 0.03593212228872378,
+        "threshold": 0.11884259432554245,
+        "tp": 109,
+        "fp": 195,
+        "tn": 1032,
+        "fn": 61,
+        "threshold_kind": "site",
+        "at_global_threshold": {
+          "threshold": 0.2115774154663086,
+          "sensitivity": 0.40588235294117647,
+          "specificity": 0.9364303178484108
+        },
+        "ece_uncalibrated": 0.07312244226305721,
+        "in_distribution": true,
+        "ci95": {
+          "auroc": [
+            0.8030624892613565,
+            0.8645773769074756
+          ],
+          "auprc": [
+            0.34013914728673844,
+            0.4911832474197157
+          ],
+          "sensitivity": [
+            0.5670529679694387,
+            0.710906684061085
+          ],
+          "specificity": [
+            0.8208196262815524,
+            0.8615260237275163
+          ],
+          "accuracy": [
+            0.7974230493915533,
+            0.8367931281317108
+          ],
+          "f1": [
+            0.39997854077253214,
+            0.5140703163531318
+          ]
+        },
+        "subgroups": {
+          "sex=F": {
+            "n": 585,
+            "prevalence": 0.12136752136752137,
+            "auroc": 0.8604291116347893,
+            "sensitivity": 0.6619718309859155,
+            "specificity": 0.8482490272373541,
+            "n_positive": 71
+          },
+          "sex=M": {
+            "n": 796,
+            "prevalence": 0.11809045226130653,
+            "auroc": 0.8097987512881131,
+            "sensitivity": 0.6063829787234043,
+            "specificity": 0.8418803418803419,
+            "n_positive": 94
+          },
+          "age=1-4y": {
+            "n": 672,
+            "prevalence": 0.10416666666666667,
+            "auroc": 0.8234931181775037,
+            "sensitivity": 0.6571428571428571,
+            "specificity": 0.8438538205980066,
+            "n_positive": 70
+          },
+          "age=<1y": {
+            "n": 508,
+            "prevalence": 0.14763779527559054,
+            "auroc": 0.7931639722863741,
+            "sensitivity": 0.5866666666666667,
+            "specificity": 0.8060046189376443,
+            "n_positive": 75
+          },
+          "pneumonia_vs_no_finding_only": {
+            "n": 1077,
+            "prevalence": 0.15784586815227483,
+            "auroc": 0.872212854270705,
+            "sensitivity": 0.6411764705882353,
+            "specificity": 0.9007717750826902,
+            "n_positive": 170
+          }
+        }
+      }
+    },
+    "localisation": {
+      "all_positives": {
+        "n": 1548,
+        "pointing_game_hit_rate": 0.6834625322997416,
+        "random_point_hit_rate": 0.12397432098444996,
+        "energy_in_box": 0.4328078076274742,
+        "uniform_map_energy_in_box": 0.12397432098444996
+      },
+      "detected_positives": {
+        "n": 1267,
+        "pointing_game_hit_rate": 0.7884767166535123,
+        "random_point_hit_rate": 0.1388550188105037,
+        "energy_in_box": 0.5014352951757497,
+        "uniform_map_energy_in_box": 0.1388550188105037
+      }
+    }
+  },
+  {
     "name": "multi3_convnext_tiny",
     "config": {
       "name": "multi3_convnext_tiny",
@@ -3042,6 +4832,372 @@
         "random_point_hit_rate": 0.13838531907232351,
         "energy_in_box": 0.4797000988984567,
         "uniform_map_energy_in_box": 0.13838531907232351
+      }
+    }
+  },
+  {
+    "name": "dg_multi3_convnext_tiny",
+    "config": {
+      "name": "dg_multi3_convnext_tiny",
+      "arch": "convnext_tiny.fb_in22k_ft_in1k",
+      "pretrained": true,
+      "sources": [
+        "kermany",
+        "rsna",
+        "vindr_pcxr"
+      ],
+      "img_size": 224,
+      "epochs": 10,
+      "batch_size": 32,
+      "lr": 0.0001,
+      "weight_decay": 0.05,
+      "warmup_epochs": 1.0,
+      "patience": 3,
+      "drop_path_rate": 0.1,
+      "num_workers": 4,
+      "seed": 42,
+      "amp": true,
+      "augment": "strong",
+      "balance_sources": true,
+      "max_train_samples": null,
+      "notes": ""
+    },
+    "label": "ConvNeXt-T (ImageNet-22k) \u00b7 trained on Kermany+RSNA+VinDr-PCXR \u00b7 strong aug, balanced",
+    "summary": {
+      "config": {
+        "name": "dg_multi3_convnext_tiny",
+        "arch": "convnext_tiny.fb_in22k_ft_in1k",
+        "pretrained": true,
+        "sources": [
+          "kermany",
+          "rsna",
+          "vindr_pcxr"
+        ],
+        "img_size": 224,
+        "epochs": 10,
+        "batch_size": 32,
+        "lr": 0.0001,
+        "weight_decay": 0.05,
+        "warmup_epochs": 1.0,
+        "patience": 3,
+        "drop_path_rate": 0.1,
+        "num_workers": 4,
+        "seed": 42,
+        "amp": true,
+        "augment": "strong",
+        "balance_sources": true,
+        "max_train_samples": null,
+        "notes": ""
+      },
+      "temperature": 1.2985880474475238,
+      "threshold": 0.3164646029472351,
+      "site_thresholds": {
+        "kermany": 0.15970061719417572,
+        "rsna": 0.23520228266716003,
+        "vindr_pcxr": 0.0748305693268776
+      },
+      "best_epoch": 7,
+      "val_metrics": {
+        "n": 5014,
+        "prevalence": 0.2891902672516953,
+        "auroc": 0.928921978404737,
+        "auprc": 0.8753475153568381,
+        "accuracy": 0.8619864379736737,
+        "sensitivity": 0.8275862068965517,
+        "specificity": 0.8759820426487093,
+        "ppv": 0.730816077953715,
+        "npv": 0.9258600237247924,
+        "f1": 0.776196636481242,
+        "balanced_accuracy": 0.8517841247726305,
+        "brier": 0.08991690740935854,
+        "ece": 0.01079450045477047,
+        "threshold": 0.3164646029472351,
+        "tp": 1200,
+        "fp": 442,
+        "tn": 3122,
+        "fn": 250
+      },
+      "n_params": 27820897,
+      "train_seconds": 1277.5845971107483
+    },
+    "eval": {
+      "kermany": {
+        "n": 624,
+        "prevalence": 0.625,
+        "auroc": 0.9943841770764847,
+        "auprc": 0.9967235064378585,
+        "accuracy": 0.967948717948718,
+        "sensitivity": 0.9923076923076923,
+        "specificity": 0.9273504273504274,
+        "ppv": 0.9579207920792079,
+        "npv": 0.9863636363636363,
+        "f1": 0.9748110831234257,
+        "balanced_accuracy": 0.9598290598290599,
+        "brier": 0.025669330734314107,
+        "ece": 0.02384366652945453,
+        "threshold": 0.15970061719417572,
+        "tp": 387,
+        "fp": 17,
+        "tn": 217,
+        "fn": 3,
+        "threshold_kind": "site",
+        "at_global_threshold": {
+          "threshold": 0.3164646029472351,
+          "sensitivity": 0.9846153846153847,
+          "specificity": 0.9358974358974359
+        },
+        "ece_uncalibrated": 0.02527510147564705,
+        "in_distribution": true,
+        "ci95": {
+          "auroc": [
+            0.9893582877055648,
+            0.9979044557398995
+          ],
+          "auprc": [
+            0.9934247598308721,
+            0.9986905379967725
+          ],
+          "sensitivity": [
+            0.9829668101565912,
+            1.0
+          ],
+          "specificity": [
+            0.8923732990567497,
+            0.957041638962766
+          ],
+          "accuracy": [
+            0.9525461671356236,
+            0.9801983965519839
+          ],
+          "f1": [
+            0.9615974329896231,
+            0.9848281086729362
+          ]
+        }
+      },
+      "rsna": {
+        "n": 6133,
+        "prevalence": 0.2524050220120659,
+        "auroc": 0.8861379512453541,
+        "auprc": 0.7432181241437423,
+        "accuracy": 0.777107451491929,
+        "sensitivity": 0.8475452196382429,
+        "specificity": 0.7533260632497274,
+        "ppv": 0.5370446172738437,
+        "npv": 0.9360433604336044,
+        "f1": 0.6574793284891005,
+        "balanced_accuracy": 0.8004356414439852,
+        "brier": 0.1130430676360379,
+        "ece": 0.016236945232069713,
+        "threshold": 0.23520228266716003,
+        "tp": 1312,
+        "fp": 1131,
+        "tn": 3454,
+        "fn": 236,
+        "threshold_kind": "site",
+        "at_global_threshold": {
+          "threshold": 0.3164646029472351,
+          "sensitivity": 0.7655038759689923,
+          "specificity": 0.8279171210468921
+        },
+        "ece_uncalibrated": 0.0321566928700688,
+        "in_distribution": true,
+        "ci95": {
+          "auroc": [
+            0.8732422686064941,
+            0.8992254423428258
+          ],
+          "auprc": [
+            0.6914780702969394,
+            0.7859349533585733
+          ],
+          "sensitivity": [
+            0.8167952832599974,
+            0.8731577732045631
+          ],
+          "specificity": [
+            0.7324497801839945,
+            0.7743105545052466
+          ],
+          "accuracy": [
+            0.7636788323484721,
+            0.7911574839543977
+          ],
+          "f1": [
+            0.625210498019015,
+            0.6883160417884535
+          ]
+        },
+        "subgroups": {
+          "sex=F": {
+            "n": 2643,
+            "prevalence": 0.2255013242527431,
+            "auroc": 0.8867412779546431,
+            "sensitivity": 0.8137583892617449,
+            "specificity": 0.7791890571568149
+          },
+          "sex=M": {
+            "n": 3490,
+            "prevalence": 0.27277936962750715,
+            "auroc": 0.884403288502162,
+            "sensitivity": 0.8686974789915967,
+            "specificity": 0.7324665090622537
+          },
+          "age=40-59": {
+            "n": 2837,
+            "prevalence": 0.2562566090941135,
+            "auroc": 0.8911435686486698,
+            "sensitivity": 0.8638239339752407,
+            "specificity": 0.7554502369668247
+          },
+          "age=60+": {
+            "n": 1561,
+            "prevalence": 0.20499679692504805,
+            "auroc": 0.8507642526188558,
+            "sensitivity": 0.78125,
+            "specificity": 0.75825946817083
+          },
+          "age=<40": {
+            "n": 1734,
+            "prevalence": 0.2889273356401384,
+            "auroc": 0.9002416901800616,
+            "sensitivity": 0.8662674650698603,
+            "specificity": 0.7445255474452555
+          },
+          "view=AP": {
+            "n": 2910,
+            "prevalence": 0.4213058419243986,
+            "auroc": 0.8461581122395602,
+            "sensitivity": 0.9176182707993474,
+            "specificity": 0.5154394299287411
+          },
+          "view=PA": {
+            "n": 3223,
+            "prevalence": 0.099906919019547,
+            "auroc": 0.8505114963570068,
+            "sensitivity": 0.5807453416149069,
+            "specificity": 0.8914167528438469
+          },
+          "lung_opacity_vs_normal_only": {
+            "n": 3440,
+            "prevalence": 0.45,
+            "auroc": 0.9830279539581864,
+            "sensitivity": 0.8475452196382429,
+            "specificity": 0.9862579281183932
+          }
+        }
+      },
+      "vindr_pcxr": {
+        "n": 1397,
+        "prevalence": 0.12168933428775948,
+        "auroc": 0.8255692986240951,
+        "auprc": 0.4364914567199165,
+        "accuracy": 0.7079455977093773,
+        "sensitivity": 0.8,
+        "specificity": 0.6951915240423798,
+        "ppv": 0.26666666666666666,
+        "npv": 0.9616685456595265,
+        "f1": 0.4,
+        "balanced_accuracy": 0.7475957620211899,
+        "brier": 0.08964395844701421,
+        "ece": 0.029869449822900126,
+        "threshold": 0.0748305693268776,
+        "tp": 136,
+        "fp": 374,
+        "tn": 853,
+        "fn": 34,
+        "threshold_kind": "site",
+        "at_global_threshold": {
+          "threshold": 0.3164646029472351,
+          "sensitivity": 0.4117647058823529,
+          "specificity": 0.9315403422982885
+        },
+        "ece_uncalibrated": 0.056069596237364655,
+        "in_distribution": true,
+        "ci95": {
+          "auroc": [
+            0.7946391738014044,
+            0.8562613332098237
+          ],
+          "auprc": [
+            0.36268623340886036,
+            0.5192664095193724
+          ],
+          "sensitivity": [
+            0.7445652173913043,
+            0.8595586130394332
+          ],
+          "specificity": [
+            0.6699364648786614,
+            0.7202369801957944
+          ],
+          "accuracy": [
+            0.6850393700787402,
+            0.7316034359341446
+          ],
+          "f1": [
+            0.3476557103969447,
+            0.44539069032797557
+          ]
+        },
+        "subgroups": {
+          "sex=F": {
+            "n": 585,
+            "prevalence": 0.12136752136752137,
+            "auroc": 0.8597851701649586,
+            "sensitivity": 0.8450704225352113,
+            "specificity": 0.7023346303501945,
+            "n_positive": 71
+          },
+          "sex=M": {
+            "n": 796,
+            "prevalence": 0.11809045226130653,
+            "auroc": 0.7934700248530036,
+            "sensitivity": 0.7553191489361702,
+            "specificity": 0.6923076923076923,
+            "n_positive": 94
+          },
+          "age=1-4y": {
+            "n": 672,
+            "prevalence": 0.10416666666666667,
+            "auroc": 0.8185571903179876,
+            "sensitivity": 0.7428571428571429,
+            "specificity": 0.7159468438538206,
+            "n_positive": 70
+          },
+          "age=<1y": {
+            "n": 508,
+            "prevalence": 0.14763779527559054,
+            "auroc": 0.7694226327944573,
+            "sensitivity": 0.8266666666666667,
+            "specificity": 0.5912240184757506,
+            "n_positive": 75
+          },
+          "pneumonia_vs_no_finding_only": {
+            "n": 1077,
+            "prevalence": 0.15784586815227483,
+            "auroc": 0.8616187820221803,
+            "sensitivity": 0.8,
+            "specificity": 0.7673649393605292,
+            "n_positive": 170
+          }
+        }
+      }
+    },
+    "localisation": {
+      "all_positives": {
+        "n": 1548,
+        "pointing_game_hit_rate": 0.7138242894056848,
+        "random_point_hit_rate": 0.12397432098444996,
+        "energy_in_box": 0.43225594829151787,
+        "uniform_map_energy_in_box": 0.12397432098444996
+      },
+      "detected_positives": {
+        "n": 1185,
+        "pointing_game_hit_rate": 0.8084388185654009,
+        "random_point_hit_rate": 0.14273214823904246,
+        "energy_in_box": 0.5206575501610093,
+        "uniform_map_energy_in_box": 0.14273214823904246
       }
     }
   }

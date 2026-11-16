@@ -181,16 +181,47 @@ def demo(
 def predict(
     images: list[Path] = typer.Argument(..., exists=True),
     model_dir: Path = typer.Option(MODELS),
+    site_profile: Path | None = typer.Option(None, exists=True, help="JSON from `pneumo calibrate`."),
 ) -> None:
-    """Predict with the exported ONNX model (no PyTorch needed)."""
-    from PIL import Image
+    """Predict with the exported ONNX model (no PyTorch needed); PNG, JPEG or DICOM."""
+    from .inference import OnnxPredictor, decode_image
 
-    from .inference import OnnxPredictor
-
-    predictor = OnnxPredictor(model_dir)
+    predictor = OnnxPredictor(model_dir, site_profile=site_profile)
     for path in images:
-        with Image.open(path) as im:
-            typer.echo(json.dumps({"file": str(path), **predictor.predict(im).to_dict()}))
+        image = decode_image(path.read_bytes(), path.name)
+        typer.echo(json.dumps({"file": str(path), **predictor.predict(image).to_dict()}))
+
+
+@app.command()
+def calibrate(
+    labels_csv: Path = typer.Argument(..., exists=True, help="CSV with columns `file` and `label` (1 = pneumonia)."),
+    site: str = typer.Option(..., help="Short site name, used for the profile file."),
+    images_dir: Path = typer.Option(Path("."), exists=True, file_okay=False, help="Folder the `file` paths are in."),
+    model_dir: Path = typer.Option(MODELS),
+    target_sensitivity: float = typer.Option(0.90, help="Local threshold for this sensitivity; 0 = Youden's J."),
+    out: Path | None = typer.Option(None, help="Default: site_profiles/<site>.json"),
+) -> None:
+    """Validate and recalibrate the released model on a new hospital's own labelled X-rays."""
+    import pandas as pd
+    from tqdm import tqdm
+
+    from .inference import OnnxPredictor, decode_image
+    from .site_calibration import calibrate_site, format_report
+
+    table = pd.read_csv(labels_csv)
+    missing = {"file", "label"} - set(table.columns)
+    if missing:
+        raise typer.BadParameter(f"{labels_csv} lacks columns {sorted(missing)}")
+    predictor = OnnxPredictor(model_dir)
+    probs = [
+        float(predictor.predict_raw([decode_image((images_dir / f).read_bytes(), str(f))])[0])
+        for f in tqdm(table["file"], desc="predict")
+    ]
+    profile = calibrate_site(
+        probs, table["label"].to_numpy(), site, predictor.model_threshold, target_sensitivity or None
+    )
+    path = profile.save(out or Path("site_profiles") / f"{site}.json")
+    typer.echo(f"{format_report(profile)}\nSaved {path}. Use it with: pneumo predict IMAGE --site-profile {path}")
 
 
 if __name__ == "__main__":

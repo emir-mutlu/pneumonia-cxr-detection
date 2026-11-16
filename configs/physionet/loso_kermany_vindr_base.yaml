@@ -1,0 +1,11 @@
+# Leave-one-hospital-out: trained without RSNA (US adults), which is then the unseen test site.
+# Needs VinDr-PCXR (PhysioNet access). Recipe: base (base = released recipe; dg = balanced + strong augmentation).
+name: loso_kermany_vindr_base
+arch: convnext_tiny.fb_in22k_ft_in1k
+sources: [kermany, vindr_pcxr]
+epochs: 10
+batch_size: 32
+lr: 1.0e-4
+weight_decay: 0.05
+patience: 3
+drop_path_rate: 0.1

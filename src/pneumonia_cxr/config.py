@@ -26,6 +26,11 @@ class TrainConfig:
     num_workers: int = 4
     seed: int = 42
     amp: bool = True
+    # "standard" (mild, anatomically plausible) or "strong" (adds exposure / gamma / blur / noise /
+    # equalisation / small erasures to break hospital-specific cues; see data/dataset.py).
+    augment: str = "standard"
+    # Draw every training source equally often instead of in proportion to its size.
+    balance_sources: bool = False
     # Optional cap on training images per source (for smoke tests and CI).
     max_train_samples: int | None = None
     notes: str = ""

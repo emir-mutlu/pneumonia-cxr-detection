@@ -24,6 +24,11 @@
   split raises the Vietnam AUROC to **0.833** and sensitivity from 7 % to **74 %**, keeps 0.990 /
   0.886 on the other two hospitals and cuts calibration error to about a third. The cost: Grad-CAM
   localisation drops from 77 % to 69 %.
+* **Training tricks did not replace data** (negative result, leave-one-hospital-out over three
+  hospitals): hospital-balanced sampling plus strong exposure / noise / marker augmentation moved
+  unseen-hospital AUROC by −0.023 to +0.027 (mean +0.003); a two-model ensemble by +0.010. What
+  works without retraining is **local recalibration**: `pneumo calibrate` takes a new hospital's
+  labelled X-rays, sets its own operating point, and lifts Vietnam sensitivity from 0.07 to ≈0.89.
 * **Explainability measured, not just shown**: Grad-CAM peaks land inside radiologist boxes in
   **77 %** of cases (random point: 12 %). The 2020-style CNN reaches 90 % accuracy but scores
   **8 %**, worse than random. It was right for the wrong reasons.
@@ -227,6 +232,34 @@ why it collapses on another hospital.
   AUROC within each view (0.85–0.86) is lower than the pooled 0.89, so part of the pooled score
   comes from recognising the view rather than the disease.
 
+### 5. Can training tricks make it work everywhere? Mostly not
+
+Each hospital in turn was left out entirely, ConvNeXt-T was trained on the other two, and the
+left-out hospital served as the test set. Two recipes were compared: the released one, and a
+"generalisation" recipe with hospital-balanced sampling and strong augmentation aimed at what
+differs between hospitals (exposure, contrast and gamma curves, histogram equalisation, blur,
+detector noise, erased corner markers).
+
+| Unseen hospital | Released recipe | Generalisation recipe | Two-model ensemble |
+|---|---|---|---|
+| Kermany (Guangzhou children) | **0.930** (0.907–0.949) | 0.907 (0.878–0.932) | 0.924 |
+| RSNA (US adults) | 0.821 (0.806–0.837) | **0.849** (0.834–0.864) | 0.840 |
+| VinDr-PCXR (Vietnamese children) | 0.746 (0.702–0.789) | 0.750 (0.706–0.791) | **0.762** |
+| **Mean** | 0.832 | 0.835 | **0.842** |
+
+* **No recipe wins everywhere.** The augmentation helps on adults (+0.027), does nothing for
+  Vietnam (+0.004) and hurts on Guangzhou (−0.023). This matches what large benchmarks found for
+  domain generalisation (Gulrajani & Lopez-Paz, ICLR 2021): plain training is hard to beat.
+* **Averaging the two models** (mean logit) gives the best mean, +0.010 over the released recipe,
+  at twice the compute. Not worth doubling the in-browser download (57 → 114 MB), so the released
+  model is unchanged.
+* **Seen hospitals do not suffer**: the generalisation recipe on Kermany + RSNA reaches 0.993 /
+  0.889 (vs 0.990 / 0.890) with better calibration (ECE 0.019 / 0.011), but its Grad-CAM pointing
+  game drops to 0.72.
+* **Conclusion**: generalisation has to come from more hospitals in training (the 3-site model:
+  +0.087 on Vietnam) and, at each new site, from local validation and recalibration
+  (`pneumo calibrate`, see [Quickstart](#quickstart)).
+
 <details>
 <summary>More figures: ROC curves, confusion matrices, training curves, Grad-CAM examples</summary>
 
@@ -298,6 +331,25 @@ uvicorn app.api:app --port 8000                          # REST API, docs at htt
 curl -F "file=@app/examples/rsna_lung_opacity.png" localhost:8000/predict
 ```
 
+**At a new hospital: validate and recalibrate before any use** (no retraining, torch-free). Put a
+few hundred of the hospital's own labelled frontal X-rays (PNG / JPEG / DICOM) in a folder with a
+`labels.csv` (`file,label`, 1 = pneumonia):
+
+```bash
+pneumo calibrate labels.csv --images-dir local_xrays --site my-hospital --target-sensitivity 0.90
+pneumo predict new_study.dcm --site-profile site_profiles/my-hospital.json
+```
+
+`calibrate` reports the local AUROC with a 95 % CI, the sensitivity / specificity of the released
+threshold at that site, and those of a locally fitted operating point (Platt recalibration +
+threshold for the target sensitivity), estimated on held-out halves so the numbers are not
+optimistic. It warns when fewer than 30 cases of either class are available. Simulated on
+VinDr-PCXR, a hospital the model never saw: sensitivity goes from 0.07 to ≈0.89, and 500 local
+images pin it to 0.89–0.92; specificity is then ≈0.30, which only better models (or local
+training data) can raise.
+
+![Recalibration at a new hospital vs. local sample size](reports/figures/site_calibration.png)
+
 **Docker** (torch-free image, ONNX Runtime + FastAPI):
 
 ```bash
@@ -317,7 +369,8 @@ pneumo report --featured multi_convnext_tiny
 pneumo export   runs/multi_convnext_tiny
 ```
 
-`scripts/reproduce.sh` runs all eight configurations in `configs/` (≈2.5 h). Add `--mlflow` to `pneumo train`
+`scripts/reproduce.sh` runs all nine public-data configurations in `configs/` (≈3 h); the ones
+needing VinDr-PCXR live in `configs/physionet/`. Add `--mlflow` to `pneumo train`
 to track runs with MLflow (`pip install -e ".[track]"`).
 
 **Third-hospital test (optional, needs your own PhysioNet access)**: sign the data use agreement
@@ -328,7 +381,9 @@ section, then:
 pneumo physionet-import vindr-pcxr-...-1.0.0.zip --project vindr-pcxr   # extract + verify SHA-256
 pneumo prepare vindr_pcxr
 pneumo evaluate runs/* --source vindr_pcxr
-pneumo train configs/multi3_convnext_tiny.yaml   # optional: the 3-site model (≈20 min)
+pneumo train configs/physionet/multi3_convnext_tiny.yaml   # optional: the 3-site model (≈20 min)
+for c in configs/physionet/loso_*.yaml; do pneumo train "$c"; done   # leave-one-hospital-out
+python scripts/site_calibration_experiment.py                  # recalibration vs. sample size
 ```
 
 Without it, every command simply skips this test set.
@@ -341,7 +396,7 @@ Without it, every command simply skips this test set.
 │   ├── web.py               web demo backend: analysis + Grad-CAM endpoint
 │   ├── static/              viewer UI (HTML, CSS, JS) + in-browser ONNX engine
 │   └── examples/            three held-out test images (with attribution)
-├── configs/                 one YAML per experiment
+├── configs/                 one YAML per experiment; physionet/ = experiments needing VinDr-PCXR
 ├── deploy/huggingface/      cards for the static Space, the model repo and a Docker Space
 ├── docs/DATASETS.md         sources, licenses, splits, data-quality findings
 ├── models/                  released model: model.onnx, model.pt, model_meta.json
@@ -355,10 +410,11 @@ Without it, every command simply skips this test set.
 │   ├── gradcam.py           Grad-CAM and localisation scores
 │   ├── explain.py           pointing game vs radiologist boxes, figures
 │   ├── export.py            ONNX export with parity check
-│   ├── inference.py         torch-free ONNX predictor
+│   ├── inference.py         torch-free ONNX predictor (optionally with a site profile)
+│   ├── site_calibration.py  local validation kit behind `pneumo calibrate`
 │   ├── report.py            tables and figures
 │   └── cli.py               `pneumo` command line
-├── scripts/                 reproduce.sh, deploy_space.py
+├── scripts/                 reproduce.sh, deploy_space.py, site_calibration_experiment.py
 ├── tests/                   pytest suite (splits, metrics, models, Grad-CAM, ONNX, API, web demo)
 ├── Dockerfile
 └── pyproject.toml
